@@ -1,0 +1,99 @@
+{
+  "projectType": "saas",
+  "projectName": "CUCEI Ubícate",
+  "projectDescription": "A React Native mobile app that helps CUCEI university students navigate the campus, access student services, connect with the community, and get AI-powered assistance.",
+  "theme": "palm",
+  "primaryColor": "#0b34b0",
+  "lightColor": "#3B82F6",
+  "darkColor": "#1E3A8A",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Overview",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "getting-started/installation", "getting-started/onboarding"]
+          },
+          {
+            "group": "Authentication",
+            "pages": ["auth/registration", "auth/login", "auth/session-management"]
+          }
+        ]
+      },
+      {
+        "tab": "Features",
+        "groups": [
+          {
+            "group": "Campus Map",
+            "pages": ["features/map/overview", "features/map/navigation", "features/map/points-of-interest"]
+          },
+          {
+            "group": "AI Chatbot",
+            "pages": ["features/chatbot/overview", "features/chatbot/usage"]
+          },
+          {
+            "group": "Student Services",
+            "pages": ["features/services/overview", "features/services/scholarships", "features/services/social-service", "features/services/medical-services", "features/services/cid"]
+          },
+          {
+            "group": "Community",
+            "pages": ["features/community/articles", "features/community/directory"]
+          },
+          {
+            "group": "Education",
+            "pages": ["features/education/radio-cucei", "features/education/curriculum"]
+          }
+        ]
+      },
+      {
+        "tab": "Development",
+        "groups": [
+          {
+            "group": "Architecture",
+            "pages": ["development/architecture", "development/project-structure"]
+          },
+          {
+            "group": "API Reference",
+            "pages": ["development/api/overview", "development/api/users", "development/api/degrees"]
+          },
+          {
+            "group": "Configuration",
+            "pages": ["development/configuration", "development/environment"]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Interactive SVG campus map with pan and zoom for navigating CUCEI buildings and facilities",
+    "Step-by-step route navigation with associated video guides for each route",
+    "AI-powered CUCEI assistant chatbot (Stack AI integration) for campus questions",
+    "User authentication with registration, login, and persistent session management",
+    "Student services hub covering scholarships, social service, medical services, and CID",
+    "Community section with articles and a staff/department directory",
+    "CUCEI Radio integration and curriculum (malla curricular) viewer by degree",
+    "Customizable user profile with avatar selection and degree information",
+    "Onboarding flow for first-time users with animated introduction screens",
+    "Supabase backend integration for data storage and user management"
+  ],
+  "publicApiSurface": [
+    "listDegrees() — fetch all available degree programs",
+    "findUserByEmail(email) — look up a user account by email address",
+    "findUserByUsername(username) — look up a user account by username",
+    "findUserByCode(code) — look up a user account by numeric code",
+    "findUserById(userId) — fetch a single user record by ID",
+    "insertUser(userData) — create a new user account",
+    "updateUser(userId, userData) — update an existing user's profile",
+    "updateUserPassword(userId, newPasswordHash) — change a user's password hash",
+    "getAllUsers() — retrieve all user records (admin use)",
+    "deleteUser(userId) — remove a user account",
+    "registerUser(userData) — full registration flow with validation and duplicate checks",
+    "validateEmail(email) — validate email format",
+    "validateUsername(username) — validate username format and length",
+    "validatePassword(password) — validate password requirements",
+    "getSession() / setSession() — manage user session via AsyncStorage",
+    "HomePage map points — interactive campus building coordinates and aliases",
+    "handleSearch(routeObject) — activate a campus navigation route with video"
+  ]
+}

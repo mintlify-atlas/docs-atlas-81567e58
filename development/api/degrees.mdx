@@ -1,0 +1,186 @@
+---
+title: "Degrees API"
+description: "API functions for fetching degree programs and input validation helpers."
+---
+
+## `DegreeRow` type
+
+```typescript
+export type DegreeRow = {
+  var_code: string;  // Primary key, e.g. "INCO", "INFO", "INBI"
+  var_name: string;  // Full degree name, e.g. "Ingeniería en Computación"
+};
+```
+
+## `listDegrees`
+
+Fetches all degree programs from the backend, sorted alphabetically by name.
+
+```typescript
+export const listDegrees = async (): Promise<DegreeRow[]>
+```
+
+**Endpoint:** `GET /CUB_degrees?order=var_name&dir=ASC`
+
+**Returns** — `Promise<DegreeRow[]>`. Always returns an array — never throws. Returns `[]` on network error or empty response.
+
+**Response normalization:** The function handles three server response shapes:
+
+```typescript
+if (!result) return [];                              // null / empty body
+if (Array.isArray(result)) return result;            // direct array
+if (result.data && Array.isArray(result.data))       // { data: [...] }
+  return result.data;
+if (typeof result === 'object') return [result];     // single object
+return [];
+```
+
+### Example
+
+```typescript
+import { listDegrees, DegreeRow } from './Src/Api/lib/api';
+
+const degrees: DegreeRow[] = await listDegrees();
+// [
+//   { var_code: "INBI", var_name: "Ingeniería Biomédica" },
+//   { var_code: "ICIV", var_name: "Ingeniería Civil" },
+//   { var_code: "INCO", var_name: "Ingeniería en Computación" },
+//   ...
+// ]
+```
+
+### UI adapter
+
+`Src/Api/consultas.ts` wraps `listDegrees()` with a UI-friendly shape:
+
+```typescript
+import { listDegrees } from './lib/api';
+
+export const get_degrees = async () => {
+  try {
+    const rows = await listDegrees();
+    return rows.map(r => ({ name: r.var_name, code: r.var_code }));
+  } catch (e) {
+    console.error('Error al consultar carreras:', e);
+    return [];
+  }
+};
+```
+
+This maps `var_name` → `name` and `var_code` → `code` for use in dropdowns and pickers.
+
+---
+
+## Validation functions
+
+These are synchronous validators exported from `Src/Api/lib/api.ts`. They perform local checks before any API call is made.
+
+### `validateEmail`
+
+```typescript
+export const validateEmail = (
+  email: string
+): { isValid: boolean; message?: string }
+```
+
+<ParamField path="email" type="string" required>
+  The email string to validate.
+</ParamField>
+
+<ResponseField name="isValid" type="boolean">
+  `true` if the email passes format validation.
+</ResponseField>
+<ResponseField name="message" type="string">
+  Present only when `isValid` is `false`. Describes the specific validation failure.
+</ResponseField>
+
+**Validation rules:**
+- Must be non-empty
+- Must match `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`
+
+---
+
+### `validateUsername`
+
+```typescript
+export const validateUsername = (
+  username: string
+): { isValid: boolean; message?: string }
+```
+
+<ParamField path="username" type="string" required>
+  The username string to validate.
+</ParamField>
+
+<ResponseField name="isValid" type="boolean">
+  `true` if the username passes all rules.
+</ResponseField>
+<ResponseField name="message" type="string">
+  Present only when `isValid` is `false`.
+</ResponseField>
+
+**Validation rules:**
+- Must be non-empty
+- Minimum length: 3 characters
+- Maximum length: 30 characters
+- Allowed characters: `[a-zA-Z0-9_.-]`
+
+---
+
+### `validatePassword`
+
+```typescript
+export const validatePassword = (
+  password: string
+): { isValid: boolean; message?: string }
+```
+
+<ParamField path="password" type="string" required>
+  The plain text password string to validate.
+</ParamField>
+
+<ResponseField name="isValid" type="boolean">
+  `true` if the password passes all rules.
+</ResponseField>
+<ResponseField name="message" type="string">
+  Present only when `isValid` is `false`.
+</ResponseField>
+
+**Validation rules:**
+- Must be non-empty
+- Minimum length: 6 characters
+- Maximum length: 50 characters (100 in `register.ts`)
+
+---
+
+## Async uniqueness validators
+
+Defined in `Src/Api/validaciones.ts`. These check uniqueness against the backend. They return `true` if the value is **available** (not yet taken) and `false` if already in use.
+
+### `validar_correo`
+
+```typescript
+export const validar_correo = async (email: string): Promise<boolean>
+```
+
+Returns `true` if the email is not registered. Falls back to `true` on network error (optimistic).
+
+### `validar_usuario`
+
+```typescript
+export const validar_usuario = async (username: string): Promise<boolean>
+```
+
+Returns `true` if the username is not taken. Falls back to `true` on error.
+
+### `validar_codigo`
+
+```typescript
+export const validar_codigo = async (codigo: string | number): Promise<boolean>
+```
+
+Returns `true` if the student code (`int_user_code`) is not already registered. Falls back to `true` on error.
+
+<Note>
+  The uniqueness validators use optimistic fallback — if the API call fails, they return `true` (available) rather than blocking the user. Duplicate detection is enforced again on the server side.
+</Note>

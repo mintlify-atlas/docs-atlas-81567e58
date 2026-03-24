@@ -1,0 +1,99 @@
+---
+title: "Curriculum viewer"
+description: "Viewing your degree program's curriculum (malla curricular)"
+---
+
+The **Curriculum Viewer** lets students see the full study plan (*malla curricular*) for their enrolled degree program. It is accessed from the Profile screen and opens an interactive image viewer with pinch-to-zoom.
+
+## How to access your curriculum
+
+1. Open the app and tap the **profile icon** (top of the map screen) or open the drawer menu and tap **Perfil**.
+2. Scroll down to the **Malla Curricular** card — it shows your enrolled program name.
+3. Tap the card to open a full-screen modal.
+4. The curriculum image for your degree loads automatically based on your `degree_code` from the login session.
+
+<Tip>
+  Use pinch-to-zoom or double-tap to zoom into specific semesters or subjects. Swipe down to close the modal.
+</Tip>
+
+## Supported degree programs
+
+The app bundles curriculum images (`.png`) and downloadable PDFs for the following programs:
+
+| Code | Degree Program |
+|------|----------------|
+| `ICIV` | Ingeniería Civil |
+| `IGFO` | Ingeniería en Fotónica |
+| `INBI` | Ingeniería Biomédica |
+| `INCE` | Ingeniería en Comunicaciones y Electrónica |
+| `INCO` | Ingeniería en Computación |
+| `INDU` | Ingeniería Industrial |
+| `INFO` | Ingeniería en Informática |
+| `INME` | Ingeniería Mecánica Eléctrica |
+| `INQU` | Ingeniería Química |
+| `INRO` | Ingeniería en Robótica |
+| `ITOG` | Ingeniería en Topografía Geomática |
+| `LCMA` | Licenciatura en Ciencia de Materiales |
+| `LIAB` / `LINA` | Ingeniería en Alimentos y Biotecnología |
+| `LIFI` | Licenciatura en Física |
+| `LIMA` | Licenciatura en Matemáticas |
+| `LOGT` | Ingeniería en Logística y Transporte |
+| `LQFB` | Licenciatura en Químico Farmacéutico Biólogo |
+| `LQUI` | Licenciatura en Química |
+
+## How the viewer works
+
+The career code is extracted from `userData.degree_code` via a regex helper (`extractCareerCode`) that handles both a bare code (e.g., `INCO`) and longer strings containing the code at the end.
+
+```js
+// ProfileScreen.js:106
+const extractCareerCode = (degreeString) => {
+  if (!degreeString) return null
+  if (/^[A-Z]{3,5}$/.test(degreeString.trim())) {
+    return degreeString.trim()
+  }
+  const match = degreeString.match(/\b([A-Z]{3,5})\b$/)
+  return match ? match[1] : null
+}
+```
+
+The resolved code is looked up in the `careerImages` map (from `Data_iconos_mallas.js`), which maps each code to a locally bundled PNG file in `Src/Screens/Profile/Mallas_Curriculares/`.
+
+## Image viewer
+
+Curriculum images are displayed using `react-native-image-pan-zoom` inside a full-screen modal:
+
+| Gesture | Action |
+|---------|--------|
+| Pinch | Zoom in / out (range: 0.5× – 4×) |
+| Double-tap | Toggle zoom |
+| Pan | Move around when zoomed |
+| Swipe down | Close the modal |
+
+A hint label **"Pellizca para hacer zoom"** appears at the bottom of the image.
+
+## PDF downloads
+
+PDF versions of the curricula are hosted on Google Drive and referenced in `pdfLinks.json`. Each key is a filename and the value is a direct download URL:
+
+```json
+{
+  "INCO.pdf": "https://drive.google.com/uc?id=1F23eswMOVosHwZ3vLpsLCTqT35gJ1Dk0&export=download",
+  "INFO.pdf": "https://drive.google.com/uc?id=1C1opT-P_vvywFaqBQzUZzy52dgf0nPSX&export=download",
+  "LIFI.pdf": "https://drive.google.com/uc?id=129zVkeD6ZxxU7h8jGhClqxBiS7wVQx4n&export=download"
+}
+```
+
+All 18 PDFs listed in `pdfLinks.json` map to the same set of programs shown in the table above.
+
+## Unavailable curricula
+
+If the degree code has no bundled image, the modal shows a fallback state:
+
+> *"Malla curricular no disponible — Esta carrera aún no tiene malla curricular disponible en el sistema"*
+
+An **Entendido** (Got it) button closes the modal.
+
+<Info>
+  Curriculum images are bundled with the app and do not require internet access. PDF downloads require a connection as they are fetched from Google Drive.
+</Info>

@@ -1,0 +1,97 @@
+---
+title: "AI Chatbot"
+description: "The CUCEI AI Assistant — an AI-powered chat interface for campus questions."
+---
+
+# AI Chatbot
+
+CUCEI Ubícate includes a built-in AI assistant powered by [Stack AI](https://www.stack-ai.com/). The chatbot is designed to answer questions about the CUCEI campus, schedules, events, locations, and student life.
+
+<CardGroup cols={2}>
+  <Card title="Campus Q&A" icon="circle-question">
+    Ask about buildings, departments, schedules, student services, and campus events.
+  </Card>
+  <Card title="Persistent history" icon="clock-rotate-left">
+    Conversations are saved to your device so you can pick up where you left off.
+  </Card>
+  <Card title="Greeting detection" icon="hand-wave">
+    Common greetings (hola, hello, hi, buenos días, etc.) receive instant local responses without an API call.
+  </Card>
+  <Card title="Inactivity management" icon="bell">
+    After 2 minutes of inactivity, the app prompts you to continue or clear the conversation.
+  </Card>
+</CardGroup>
+
+## How it works
+
+The chatbot sends messages to the Stack AI inference API and displays formatted responses. The API endpoint is:
+
+```
+POST https://api.stack-ai.com/inference/v0/run/1640c9fb-aa6e-42d3-aa7b-589fb81ea0a0/679133f2b623c3637afc299f
+```
+
+The payload structure is:
+
+```json
+{
+  "user_id": "1234",
+  "in-0": "<user message>"
+}
+```
+
+The response is read from `outputs["out-0"]` and truncated to 5000 characters maximum.
+
+## Response processing
+
+Bot responses are cleaned before display using the `processResponse` function:
+
+```javascript Chatbot.js
+function processResponse(response) {
+  response = response.replace(/\[\^.*?\]/g, "");              // Remove citation markers like [^1]
+  response = response.replace(/<citations>.*?<\/citations>/gs, ""); // Remove citation blocks
+  response = response.replace(/\n\s*\n/g, "\n");             // Collapse multiple blank lines
+  return response.trim();
+}
+```
+
+## Greeting detection
+
+Messages containing common greetings are handled locally without an API call:
+
+```javascript Chatbot.js
+const isGreeting = (message) => {
+  const greetings = [
+    "hola", "hello", "hi", "hey",
+    "buenos días", "buenas tardes", "buenas noches",
+  ];
+  return greetings.some((greeting) => message.toLowerCase().includes(greeting));
+};
+```
+
+Greeting responses are randomly selected from a pool of 5 pre-written Spanish responses.
+
+## Message persistence
+
+All messages are saved to AsyncStorage under the key `"chatMessages"`. When you reopen the chatbot screen, your previous conversation is restored automatically.
+
+The initial welcome message is always:
+> "¡Hola! Soy el bot asistente de CUCEI. Estoy aquí para ayudarte con cualquier duda que tengas sobre el campus, horarios, eventos y más. ¿En qué puedo asistirte hoy?"
+
+## Inactivity timer
+
+The inactivity timer is only active when the Chatbot screen is focused:
+
+| Threshold | Action |
+|---|---|
+| 2 minutes | Shows an inactivity modal: "¿Aún estás ahí?" |
+| 3 minutes | Automatically deletes the conversation (resets to welcome message) |
+
+From the inactivity modal, you can choose **Continuar** to reset the timer, or **Limpiar chat** to clear the conversation immediately.
+
+<Note>
+  The inactivity timer stops when you navigate away from the Chatbot screen and restarts when you return. It will not delete messages while you're using other parts of the app.
+</Note>
+
+## First visit
+
+On your first visit to the Chatbot screen, a welcome modal appears with the bot's animated mascot and a brief introduction. The app checks the AsyncStorage key `"hasVisitedNewChatbot"` — once you dismiss the modal, it will not appear again.

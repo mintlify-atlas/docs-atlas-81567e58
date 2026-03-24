@@ -1,0 +1,133 @@
+---
+title: "API overview"
+description: "How CUCEI Ubícate communicates with the backend REST API."
+---
+
+All backend communication is handled through a single HTTP client defined in `Src/Api/lib/api.ts`. This module exports every API function consumed by the rest of the application.
+
+## Base URL
+
+```
+https://ilabtdi.com/api_ubicate
+```
+
+All requests go through this base. The `USE_INDEX_PHP` flag controls whether requests target `index.php` explicitly:
+
+```typescript
+const BASE = 'https://ilabtdi.com/api_ubicate';
+const USE_INDEX_PHP = true;
+
+const url = (p: string) => `${BASE}${USE_INDEX_PHP ? '/index.php' : ''}${p}`;
+```
+
+With `USE_INDEX_PHP = true` (the current default), a call to `/CUB_users?var_email=foo` resolves to:
+
+```
+https://ilabtdi.com/api_ubicate/index.php/CUB_users?var_email=foo
+```
+
+## Available resources
+
+| Resource | Endpoint prefix | Description |
+|---|---|---|
+| Users | `/CUB_users` | Student account CRUD |
+| Degrees | `/CUB_degrees` | Academic degree program list |
+
+## The `http()` wrapper
+
+Every API call goes through the internal `http()` function. It is not exported — all exported functions call it internally.
+
+```typescript
+async function http(path: string, init: RequestInit = {}): Promise<any>
+```
+
+### Default headers
+
+Every request automatically includes:
+
+```typescript
+{
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+}
+```
+
+Additional headers passed in `init.headers` are merged on top.
+
+### Dirty response cleaning
+
+The backend occasionally prepends non-JSON content (PHP notices, whitespace) to the response body. The `http()` function detects the first `[` or `{` character and trims everything before it:
+
+```typescript
+const jsonStartArray  = responseText.indexOf('[');
+const jsonStartObject = responseText.indexOf('{');
+
+let jsonStart = -1;
+if (jsonStartArray !== -1 && jsonStartObject !== -1) {
+  jsonStart = Math.min(jsonStartArray, jsonStartObject);
+} else if (jsonStartArray !== -1) {
+  jsonStart = jsonStartArray;
+} else if (jsonStartObject !== -1) {
+  jsonStart = jsonStartObject;
+}
+
+if (jsonStart > 0) {
+  cleanedResponse = responseText.substring(jsonStart);
+}
+```
+
+### Error handling
+
+| Condition | Behavior |
+|---|---|
+| `!res.ok` (4xx / 5xx) | Reads the error body and throws `HTTP <status>: <body>` |
+| Empty response body | Returns `null` |
+| Response contains `<html>` or `<!DOCTYPE` | Throws a descriptive HTML-error message |
+| Unparseable JSON | Throws with the first 100 characters of the bad response |
+| Network error | Re-throws the original fetch error |
+
+## `cleanString()` utility
+
+Before query parameters are appended to URLs, string values are normalized to avoid database collation issues with accented characters:
+
+```typescript
+const cleanString = (str: string): string => {
+  if (!str) return '';
+  return str
+    .normalize('NFD')                   // Decompose accented characters
+    .replace(/[\u0300-\u036f]/g, '')    // Remove diacritics
+    .replace(/[^\w\s@.-]/g, '')         // Allow only safe characters
+    .trim();
+};
+```
+
+This is applied to emails, usernames, names, and degree codes before they are passed to `encodeURIComponent()` and appended to request URLs.
+
+## Example: fetching a user by email
+
+```typescript
+import { findUserByEmail, UserRow } from './Src/Api/lib/api';
+
+const users: UserRow[] = await findUserByEmail('estudiante@cucei.udg.mx');
+// Resolves to GET https://ilabtdi.com/api_ubicate/index.php/CUB_users?var_email=estudiante%40cucei.udg.mx
+
+if (users.length > 0) {
+  console.log(users[0].var_name); // "Juan"
+}
+```
+
+## Response normalization
+
+Exported query functions normalize the server response into a consistent return type regardless of how the server structures its payload:
+
+```typescript
+// All fetch functions use this pattern:
+if (!result) return [];                              // null / empty
+if (Array.isArray(result)) return result;            // already an array
+if (result.data && Array.isArray(result.data))       // wrapped in .data
+  return result.data;
+if (typeof result === 'object') return [result];     // single object
+return [];
+```
+
+Single-record fetch functions (`findUserById`) return `UserRow | null` instead of an array.

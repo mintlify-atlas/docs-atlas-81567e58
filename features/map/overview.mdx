@@ -1,0 +1,75 @@
+---
+title: "Campus map overview"
+description: "Interactive map of the CUCEI campus for navigating buildings, modules, and facilities."
+---
+
+# Campus map overview
+
+The campus map is the heart of CUCEI Ubícate. It displays a fully interactive, zoomable and pannable map of the CUCEI campus, with all buildings, modules, and key facilities marked as tappable points of interest.
+
+<CardGroup cols={2}>
+  <Card title="Route search" icon="route" href="/features/map/navigation">
+    Search for two locations and get a highlighted path with a video walkthrough guide.
+  </Card>
+  <Card title="Specific search" icon="magnifying-glass" href="/features/map/navigation">
+    Find any building or facility by name or alias using the always-visible search bar.
+  </Card>
+  <Card title="Points of interest" icon="map-pin" href="/features/map/points-of-interest">
+    Tap any building on the map to open a bottom sheet with detailed information.
+  </Card>
+  <Card title="Video guides" icon="play" href="/features/map/navigation">
+    Watch embedded video walkthroughs for each campus route while navigating.
+  </Card>
+</CardGroup>
+
+## Map interface
+
+When you open CUCEI Ubícate, the campus map loads immediately. The map is built on a 1600×1400 pixel campus image overlaid with an interactive SVG layer that handles all touch interactions.
+
+### Floating action buttons
+
+Three buttons float over the map at the top of the screen:
+
+| Button | Position | Action |
+|---|---|---|
+| Menu (hamburger icon) | Top left | Opens the navigation drawer |
+| Profile (user icon) | Top left, beside menu | Navigates to your profile screen |
+| Route search (route icon) | Top right | Opens the route search panel |
+
+When you have set a profile avatar, the profile button displays your selected avatar image instead of the default user icon.
+
+### Map gestures
+
+The map supports standard touch gestures via `react-native-image-pan-zoom`:
+
+| Gesture | Action |
+|---|---|
+| Pinch | Zoom in/out (min 0.5×, max 2×) |
+| Pan/drag | Move around the map |
+| Tap on a point | Opens the building info bottom sheet |
+
+<Note>
+  The map is based on a custom 1600×1400 px campus image of CUCEI. The SVG overlay is precisely calibrated to the image's coordinate system, so each building label and tap area matches the real location on the campus photo.
+</Note>
+
+## Bottom sheet
+
+When you tap any building or point of interest on the map, a bottom sheet slides up from the bottom of the screen. It snaps to two heights:
+
+- **50%** — default snap point, shows summary information
+- **75%** — expanded view for more detail
+
+Tap outside the sheet or swipe it down to close it.
+
+## Active route overlay
+
+When a route is active, the SVG layer draws a highlighted path connecting the start and destination points. Two additional controls appear:
+
+- **"Finalizar Ruta" button** — red button at the bottom, clears the active route
+- **"Ver Video" button** — blue play button (bottom right), opens the video walkthrough modal
+
+The chatbot floating button is hidden while a route is active to reduce clutter.
+
+## Tablet support
+
+The map interface adapts automatically for tablets (screen width ≥ 768px). Button sizes, icon sizes, and padding scale proportionally using the device's screen width.

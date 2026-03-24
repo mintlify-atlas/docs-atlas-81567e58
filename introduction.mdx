@@ -1,0 +1,69 @@
+---
+title: "CUCEI Ubícate"
+description: "Your complete guide to navigating the CUCEI campus — maps, services, community, and more."
+---
+
+# CUCEI Ubícate
+
+**CUCEI Ubícate** is a mobile app built for students at the Centro Universitario de Ciencias Exactas e Ingenierías (CUCEI), Universidad de Guadalajara. It puts everything you need to navigate and thrive on campus right in your pocket.
+
+<CardGroup cols={2}>
+  <Card title="Interactive Campus Map" icon="map" href="/features/map/overview">
+    Navigate CUCEI with a zoomable, pannable map. Search for buildings, classrooms, and facilities. Follow step-by-step routes with video guides.
+  </Card>
+  <Card title="AI Chatbot Assistant" icon="robot" href="/features/chatbot/overview">
+    Get instant answers about campus life, schedules, events, and more from the AI-powered CUCEI Assistant.
+  </Card>
+  <Card title="Student Services" icon="graduation-cap" href="/features/services/overview">
+    Access scholarships, social service info, medical services, CID, and more — all in one place.
+  </Card>
+  <Card title="Community" icon="users" href="/features/community/articles">
+    Browse campus articles, news, and the staff directory to stay connected with the CUCEI community.
+  </Card>
+</CardGroup>
+
+## What you can do
+
+- **Find your way** — Search for any building, classroom, module, or facility on the interactive campus map
+- **Follow routes** — Activate turn-by-turn routes with embedded video walkthroughs
+- **Ask the bot** — Get answers to campus questions 24/7 from the CUCEI AI Assistant
+- **Manage your account** — Register, log in, and personalize your profile with a custom avatar
+- **Access services** — Quickly reach info about scholarships, social service, medical services, and CID
+- **Stay informed** — Read campus articles and browse the staff directory
+- **Listen to CUCEI Radio** — Tune into the university radio stream from the app
+- **View your curriculum** — Browse the malla curricular for your degree program
+
+## Get started
+
+<Steps>
+  <Step title="Install the app">
+    Set up your development environment and run CUCEI Ubícate locally using Expo.
+    [Installation guide →](/getting-started/installation)
+  </Step>
+  <Step title="Create an account">
+    Register with your email and complete your student profile.
+    [Registration guide →](/auth/registration)
+  </Step>
+  <Step title="Explore the map">
+    Open the campus map, search for a location, and navigate with confidence.
+    [Campus map →](/features/map/overview)
+  </Step>
+</Steps>
+
+## Technology
+
+CUCEI Ubícate is built with:
+
+| Layer | Technology |
+|---|---|
+| Mobile framework | React Native 0.76 + Expo 52 |
+| Navigation | React Navigation 6 (stack + drawer) |
+| Backend | Custom REST API (`ilabtdi.com/api_ubicate`) |
+| AI | Stack AI (chatbot inference) |
+| Storage | AsyncStorage (local), Supabase (cloud) |
+| Maps | Custom SVG campus map with react-native-svg |
+| UI | React Native Paper + FontAwesome |
+
+<Info>
+  CUCEI Ubícate is a private app developed for CUCEI students. For questions or support, contact the development team through the GitHub repository.
+</Info>

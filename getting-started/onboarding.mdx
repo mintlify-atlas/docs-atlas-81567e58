@@ -1,0 +1,73 @@
+---
+title: "Onboarding"
+description: "The first-time experience that guides new users through CUCEI Ubícate before reaching the login screen."
+---
+
+When a user opens CUCEI Ubícate for the first time, they are shown a three-screen onboarding carousel before being directed to the login screen. The onboarding sequence is defined in `Src/auth/OnboardingScreen.js` and uses Lottie animations to illustrate each concept.
+
+<Note>
+  Onboarding is shown **only once**. After the user completes or skips it, the flag `@onboarding_completed` is written to `AsyncStorage` with the value `"true"`. On every subsequent launch, `App.js` reads this key first and skips directly to the session check.
+</Note>
+
+## The three onboarding screens
+
+<Steps>
+  <Step title="Bienvenido a CUCEI Ubícate!">
+    **Title:** Bienvenido a CUCEI Ubícate!
+
+    **Description:** Descubre cómo navegar por el campus universitario con facilidad y encontrar todo lo que necesitas.
+
+    Animated with `Student.json` — a Lottie animation of a student. This screen introduces the app's core purpose: helping CUCEI students navigate the university campus.
+  </Step>
+
+  <Step title="Encuentra tu camino">
+    **Title:** Encuentra tu camino
+
+    **Description:** Localiza aulas, módulos y servicios rápidamente con nuestro sistema de navegación inteligente.
+
+    Animated with `Ubicacion.json` — a location/map Lottie animation. This screen highlights the indoor navigation and location features of the app.
+  </Step>
+
+  <Step title="Mantente informado">
+    **Title:** Mantente informado
+
+    **Description:** Recibe notificaciones importantes y accede a toda la información del campus en tiempo real.
+
+    Animated with `Camino.json` — a path/route Lottie animation. This screen explains the real-time campus information and notification capabilities.
+  </Step>
+</Steps>
+
+## Navigation controls
+
+The onboarding screen provides two ways to proceed:
+
+- **Siguiente / Comenzar button** — advances to the next slide. On the last slide the label changes to "Comenzar". Tapping it on the final slide completes onboarding.
+- **Saltar button** — skips all remaining slides immediately and completes onboarding.
+
+Both actions call `AsyncStorage.setItem("@onboarding_completed", "true")` and then navigate to the `Login` screen using `navigation.replace("Login")`.
+
+## AsyncStorage key
+
+| Key | Value | Set by | Read by |
+|---|---|---|---|
+| `@onboarding_completed` | `"true"` | `OnboardingScreen.js` | `App.js` (`checkAppState`) |
+
+## App startup logic
+
+In `App.js`, the `checkAppState` function runs on mount and reads `@onboarding_completed` **before** checking for an active session:
+
+```js
+const onboardingCompleted = await AsyncStorage.getItem("@onboarding_completed");
+
+// If null, this is the first launch — show onboarding regardless of session state
+if (onboardingCompleted === null) {
+  setIsFirstLaunch(true);
+  setIsLoggedIn(false);
+  return;
+}
+
+// Only check session after onboarding has been seen
+const session = await getSession();
+```
+
+This guarantees that onboarding always runs to completion on a fresh install, even if a session somehow exists from a previous build.

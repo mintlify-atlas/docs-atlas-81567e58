@@ -1,0 +1,93 @@
+---
+title: "CUCEI Radio"
+description: "Listening to CUCEI Radio within the app"
+---
+
+**Radio CUCEI** is the university's experimental broadcasting system. The app provides a dedicated screen with station information and a direct link to the live web player.
+
+## About the station
+
+From `radio_cucei.json`:
+
+> *Es un sistema de radiodifusión experimental que transmite desde el laboratorio de audio y acústica del módulo N. El alcance de transmisión de radio vía FM está limitado al área del Centro Universitario a una frecuencia de 96.7 Mhz; además se puede escuchar vía internet en la página web del centro universitario.*
+
+<CardGroup cols={2}>
+  <Card title="FM Frequency" icon="radio">
+    **96.7 MHz** — FM range is limited to the CUCEI campus grounds.
+  </Card>
+  <Card title="Online stream" icon="globe">
+    Available worldwide via `radio.cucei.udg.mx`
+  </Card>
+  <Card title="Genre" icon="music">
+    Variado (Mixed)
+  </Card>
+  <Card title="Language" icon="language">
+    Spanish
+  </Card>
+</CardGroup>
+
+## Purpose and programming
+
+Radio CUCEI serves a dual role:
+
+1. **Academic** — the station is used as a live laboratory for students in *comunicaciones* (communications engineering) courses.
+2. **Institutional diffusion** — it broadcasts relevant campus updates including:
+   - Upcoming events
+   - Exam schedules
+   - Cultural activities
+   - Entertainment programming
+
+## Listening to the station
+
+The app does not embed an in-app audio player. Instead, it provides a **"Escuchar Radio CUCEI"** button that opens the web player in the system browser:
+
+```
+http://radio.cucei.udg.mx/reproductor.html
+```
+
+Tapping the button calls `Linking.openURL` with the player URL. The web player hosted by CUCEI handles the actual audio stream.
+
+<Info>
+  The FM signal (96.7 MHz) only reaches the CUCEI campus area. For off-campus listening, use the online stream via the web player link.
+</Info>
+
+## Screen layout
+
+The screen is organized into three cards on a `ScrollView`:
+
+<CardGroup cols={1}>
+  <Card title="Header" icon="radio">
+    A blue gradient banner (`#0056b3` → `#007bff`) with the station name and a radio icon.
+  </Card>
+  <Card title="Description card" icon="circle-info">
+    Displays the station description from `section-description.description`. URLs and email addresses within the text are automatically detected and rendered as tappable links with external-link icons.
+  </Card>
+  <Card title="Station details card" icon="music">
+    Shows genre, language, and the **Escuchar Radio CUCEI** play button. Tapping opens `radio.cucei.udg.mx/reproductor.html` in the browser.
+  </Card>
+</CardGroup>
+
+### Additional information list
+
+Below the main cards, the screen renders a **"Información Adicional"** section from the `listed-elements` array in the JSON:
+
+- Medio de difusión para actividades relevantes del centro universitario
+- Transmite eventos, programación de exámenes, actividades culturales y de entretenimiento
+- Sirve como plataforma para prácticas de las materias de comunicaciones
+
+Each item is prefixed with a chevron icon and supports inline tappable URLs.
+
+## Pull-to-refresh
+
+The screen supports pull-to-refresh via a `RefreshControl` that reloads `radio_cucei.json` from the app bundle and updates the `AsyncStorage` cache (`radioCuceiData`).
+
+## Technical details
+
+| Property | Value |
+|----------|-------|
+| Transmission type | FM + Internet stream |
+| FM frequency | 96.7 MHz |
+| Coverage area | CUCEI campus |
+| Web URL | `http://radio.cucei.udg.mx` |
+| Player URL | `http://radio.cucei.udg.mx/reproductor.html` |
+| Origin | Laboratorio de audio y acústica, Módulo N |

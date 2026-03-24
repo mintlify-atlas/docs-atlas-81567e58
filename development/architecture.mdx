@@ -1,0 +1,129 @@
+---
+title: "Architecture"
+description: "Technical architecture of CUCEI Ubícate — a React Native / Expo campus navigation app for CUCEI university students."
+---
+
+CUCEI Ubícate is a mobile-first application built with React Native and Expo SDK 52. It communicates with a custom REST API hosted at `https://ilabtdi.com/api_ubicate` and uses Supabase for supplementary data operations.
+
+## Architecture layers
+
+<CardGroup cols={2}>
+  <Card title="Presentation" icon="mobile">
+    React Native 0.76.9 components organized into screen modules (Home, Profile, Education, ScolarServices, ChatBot, community). Navigation is handled entirely by React Navigation.
+  </Card>
+  <Card title="Navigation" icon="route">
+    A Stack Navigator (`createNativeStackNavigator`) wraps a Drawer Navigator (`createDrawerNavigator`). The stack controls the auth flow; the drawer provides in-app navigation once the user is authenticated.
+  </Card>
+  <Card title="Data layer" icon="database">
+    All API calls flow through a single `http()` function in `Src/Api/lib/api.ts`. Higher-level modules (`altaUsuario.ts`, `login.ts`, `register.ts`, `consultas.ts`, `validaciones.ts`) import from this shared core.
+  </Card>
+  <Card title="Storage" icon="hard-drive">
+    `AsyncStorage` persists the onboarding state (`@onboarding_completed`) and session data. `expo-secure-store` is available for secrets. Supabase JS client handles realtime and database operations where needed.
+  </Card>
+</CardGroup>
+
+## App startup flow
+
+The startup sequence is determined in `App.js` before any navigation screen is rendered:
+
+```
+App launch
+  └── SplashScreen animation
+        └── checkAppState()
+              ├── AsyncStorage.getItem("@onboarding_completed")
+              │     └── null  → isFirstLaunch = true  → Onboarding screen
+              └── not null → getSession()
+                    ├── session found → isLoggedIn = true  → MyDrawer (Home)
+                    └── no session   → isLoggedIn = false → Login screen
+```
+
+The splash screen always renders first (`showSplash = true`). Only after `onAnimationComplete` fires does the navigator evaluate the auth state and render the appropriate screen group.
+
+### Stack screen groups
+
+| State | Screen group rendered |
+|---|---|
+| `isFirstLaunch === true` | Onboarding → Login → Registro → Completar Perfil → Principal Home |
+| `isLoggedIn === true` | Principal Home (MyDrawer) directly, with `user` initial params |
+| `isLoggedIn === false` | Login → Registro → Completar Perfil → Principal Home |
+| Loading fallback | SplashScreen component |
+
+## Navigation architecture
+
+```
+NavigationContainer
+  └── Stack.Navigator (headerShown: false)
+        ├── [auth group] OnboardingScreen
+        ├── [auth group] LoginScreen
+        ├── [auth group] RegisterScreen
+        ├── [auth group] CompleteProfile
+        └── MyDrawer  ←─ createDrawerNavigator()
+              ├── Mapa                  (HomePage)
+              ├── Perfil                (ProfileScreen) [hidden from drawer menu]
+              ├── Directorio            (Directory)
+              ├── Articulos             (Articles)
+              ├── Servicio social       (Social_service)
+              ├── Becas                 (Scholarships)
+              ├── Radio CUCEI           (CUCEI_radio)
+              ├── Reconocimiento facial (Facial_recognition)
+              ├── Servicios escolares   (School_services)
+              ├── Servicios médicos     (Medical_services)
+              ├── CID                   (CID)
+              └── ChatbotScreen         (Chatbot)
+```
+
+The drawer sections are organized into four categories: **Principal**, **Servicios Académicos**, **Servicios de Bienestar**, and **Entretenimiento**.
+
+## Data flow
+
+```
+Component
+  └── calls e.g. findUserByEmail(email)
+        └── api.ts: cleanString() normalizes input
+              └── http("/CUB_users?var_email=...")
+                    └── fetch(url(path), { Content-Type: application/json })
+                          └── res.text()
+                                └── dirty-response cleaning (strip leading text before [ or {)
+                                      └── JSON.parse(cleanedResponse)
+                                            └── returns UserRow[]
+```
+
+### Dirty response cleaning
+
+The backend at `ilabtdi.com` occasionally returns non-JSON text before the actual JSON payload (e.g., PHP notices or whitespace). The `http()` function in `Src/Api/lib/api.ts` handles this:
+
+```typescript
+const jsonStartArray  = responseText.indexOf('[');
+const jsonStartObject = responseText.indexOf('{');
+
+let jsonStart = -1;
+if (jsonStartArray !== -1 && jsonStartObject !== -1) {
+  jsonStart = Math.min(jsonStartArray, jsonStartObject);
+} else if (jsonStartArray !== -1) {
+  jsonStart = jsonStartArray;
+} else if (jsonStartObject !== -1) {
+  jsonStart = jsonStartObject;
+}
+
+if (jsonStart > 0) {
+  cleanedResponse = responseText.substring(jsonStart);
+}
+```
+
+If the cleaned response still contains `<html>` or `<!DOCTYPE`, the function throws a descriptive error instead of surfacing a cryptic JSON parse failure.
+
+## Supabase
+
+<Note>
+  Supabase (`@supabase/supabase-js ^2.39.8`) is included as a dependency alongside the custom REST API. The primary user and degree data is managed through `https://ilabtdi.com/api_ubicate`. Supabase is used for supplementary operations (realtime, additional tables) where the custom API does not provide coverage.
+</Note>
+
+## Password hashing
+
+Passwords are never stored in plain text. The app uses a deterministic custom hash function (`secureHash`) defined identically in `altaUsuario.ts`, `login.ts`, `register.ts`, and `Src/Api/lib/api.ts`. The format is:
+
+```
+$secure$<hash1>$<hash2>$<hash3>$<timestamp_suffix>
+```
+
+The `secureCompare` function in `login.ts` re-derives the hash using the stored timestamp suffix and performs a constant-time string comparison across all three hash components.

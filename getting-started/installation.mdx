@@ -1,0 +1,88 @@
+---
+title: "Installation"
+description: "Set up your development environment to build and run CUCEI Ubícate locally."
+---
+
+<Steps>
+  <Step title="Install prerequisites">
+    Before cloning the project, ensure you have the following tools installed:
+
+    - **Node.js** v18 or later — [nodejs.org](https://nodejs.org)
+    - **Git** — [git-scm.com](https://git-scm.com)
+    - **Expo CLI** — install globally via npm:
+
+    ```bash
+    npm install -g expo-cli
+    ```
+
+    To run on a physical device, install the **Expo Go** app from the App Store or Google Play. For Android emulation, install Android Studio; for iOS simulation, install Xcode (macOS only).
+  </Step>
+
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/yairhdz24/CUCEIUbicate.git
+    cd CUCEIUbicate
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    Install all Node.js dependencies defined in `package.json`:
+
+    ```bash
+    npm install
+    ```
+
+    The project depends on Expo SDK 52, React Native 0.76, React Navigation v6, Supabase JS v2, and a range of Expo modules including `expo-secure-store`, `expo-av`, `expo-file-system`, and `expo-linear-gradient`.
+  </Step>
+
+  <Step title="Start the development server">
+    Use one of the following scripts from `package.json` depending on your target platform:
+
+    <CodeGroup>
+      ```bash Android
+      npm run android
+      # Equivalent to: expo start --android
+      ```
+
+      ```bash iOS
+      npm run ios
+      # Equivalent to: expo start --ios
+      ```
+
+      ```bash Web
+      npm run web
+      # Equivalent to: expo start --web
+      ```
+
+      ```bash All platforms
+      npm start
+      # Equivalent to: expo start
+      # Opens the Expo developer menu; scan the QR code with Expo Go
+      ```
+    </CodeGroup>
+  </Step>
+</Steps>
+
+## EAS Build profiles
+
+The project ships with three EAS build profiles defined in `eas.json`:
+
+| Profile | Distribution | Notes |
+|---|---|---|
+| `development` | Internal | Includes `expo-dev-client`; iOS targets simulator, Android uses the `latest` image with `EXPO_DEBUG=true` |
+| `preview` | Internal | Android APK build; useful for sharing test builds without going through the store |
+| `production` | Store | Auto-increments version; iOS targets a real device; Android uses the `latest` image |
+
+To trigger an EAS build:
+
+```bash
+# Build for Android preview
+eas build --profile preview --platform android
+
+# Build for production
+eas build --profile production --platform all
+```
+
+<Note>
+  EAS builds require an Expo account and the `eas-cli` package. Install it with `npm install -g eas-cli` and authenticate with `eas login` before running any `eas build` command. The project's EAS project ID is `08a561e4-8d60-47af-b4b6-f830296c28e8`.
+</Note>

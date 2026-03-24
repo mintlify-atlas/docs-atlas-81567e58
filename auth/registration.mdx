@@ -1,0 +1,104 @@
+---
+title: "Registration"
+description: "Create a new CUCEI Ubícate account in two steps: email and password, then profile completion."
+---
+
+Registration is split across two screens: `RegisterScreen` collects the email and password, and `CompleteProfile` collects the user's personal and academic details. Both screens are defined in `Src/auth/`.
+
+## Registration flow
+
+<Steps>
+  <Step title="Enter email and password (RegisterScreen)">
+    The user provides their institutional email address and a password. The app validates the inputs locally before making any network call.
+
+    **Email validation:**
+    - Must not be empty.
+    - Must match the regex `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`.
+    - The domain must be either `alumnos.udg.mx` or `gmail.com`.
+
+    **Password validation:**
+    - Must not be empty.
+    - Must be between **6 and 50 characters**.
+    - The UI also hints that a strong password should have at least 8 characters, one uppercase letter, one number, and one symbol.
+
+    **Duplicate email check:**
+    `validar_correo(email)` is called from `Src/Api/validaciones.ts`. It queries the database via `findUserByEmail` and returns `true` if the address is available, or `false` if it is already registered. If `false`, the error "Este correo electrónico ya se ha registrado" is displayed.
+
+    On success, the app shows a brief success modal ("Primer paso completado") and navigates to `CompleteProfile`, passing `{ mail: email, pass: password }` as route params.
+  </Step>
+
+  <Step title="Complete your profile (CompleteProfile)">
+    The user fills in their personal and academic information. The email and password from the previous screen are passed via route params and never re-entered.
+
+    **Username validation:**
+    - Must be between **3 and 30 characters**.
+    - Must match the pattern `/^[a-zA-Z0-9_.-]+$/` — only letters, digits, dots, hyphens, and underscores.
+    - Checked for uniqueness via `validar_usuario(username)` which queries `findUserByUsername`.
+
+    **Student code validation:**
+    - Must be exactly **9 numeric digits**.
+    - Checked for uniqueness via `validar_codigo(codigo)` which queries `findUserByCode`.
+
+    **Name / Lastnames validation:**
+    - Must not be empty.
+    - Must match `/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/` — only letters (including accented characters and ñ) and spaces.
+
+    **Degree selection:**
+    The list of available degrees is fetched at mount time from `get_degrees()` in `Src/Api/consultas.ts`. The user selects their degree from a modal picker; only the `code` field of the selected degree is stored.
+
+    On success, the profile data is persisted via `alta_usuario(...)` in `Src/Api/altaUsuario.ts`. The email is also saved to `AsyncStorage` under the key `@saved_email` so the login screen can pre-populate the email field. After 4 seconds, the app navigates to `Login`.
+  </Step>
+</Steps>
+
+## Required fields
+
+<ParamField body="email" type="string" required>
+  Institutional or Gmail email address. Must match `/^[^\s@]+@[^\s@]+\.[^\s@]+$/` and use the domain `alumnos.udg.mx` or `gmail.com`.
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  Account password. Must be 6–50 characters. The actual value is hashed using the `secureHash` function in `Src/Api/register.ts` before storage.
+</ParamField>
+
+<ParamField body="name" type="string" required>
+  User's first name. Only letters (including accented characters and ñ) and spaces are allowed.
+</ParamField>
+
+<ParamField body="lastnames" type="string" required>
+  User's last names. Same character restrictions as `name`.
+</ParamField>
+
+<ParamField body="username" type="string" required>
+  Public username. 3–30 characters; only `[a-zA-Z0-9_.-]` are accepted. Must be unique across all accounts.
+</ParamField>
+
+<ParamField body="degree_code" type="string" required>
+  The `code` of the student's enrolled degree, selected from the list returned by `get_degrees()`. Examples include `INCO` (Ingeniería en Computación) and `INFO` (Ingeniería en Informática).
+</ParamField>
+
+<ParamField body="student_code" type="string" required>
+  9-digit numeric student identification code issued by the university. Must be unique and not previously registered.
+</ParamField>
+
+## Password hashing
+
+Passwords are never stored in plain text. Before insertion, `secureHash()` in `Src/Api/register.ts` applies a three-pass custom hash seeded with the static salt `CUCEI_UBICATE_2024_PRODUCTION_SECURE_SALT_V2` and a base-36 timestamp component. The resulting hash follows the format:
+
+```
+$secure$<hash1>$<hash2>$<hash3>$<timestamp>
+```
+
+This same format is verified during login by `secureCompare()` in `Src/Api/login.ts`.
+
+## Error states
+
+| Condition | Error message |
+|---|---|
+| Empty fields | "Por favor, completa todos los campos" |
+| Invalid email format | "Formato de email inválido" |
+| Non-institutional domain | "Usa tu correo institucional (@alumnos.udg.mx)" |
+| Password too short | "La contraseña debe tener al menos 6 caracteres" |
+| Passwords do not match | "Las contraseñas no coinciden" |
+| Email already registered | "Este correo electrónico ya se ha registrado" |
+| Username already taken | "Este usuario ya ha sido registrado" |
+| Invalid student code length | "El código debe tener exactamente 9 dígitos" |

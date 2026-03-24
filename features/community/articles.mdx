@@ -1,0 +1,89 @@
+---
+title: "Campus articles"
+description: "Reading campus news and articles in CUCEI Ubícate"
+---
+
+The **Articles** screen gives CUCEI students quick access to key excerpts from the *Reglamento General de Evaluación y Promoción de Alumnos* (RGEPA) — the university-wide academic regulation that governs grading, extraordinary exams, academic dismissal, and disciplinary conduct.
+
+<Note>
+  The article data is loaded from the bundled `articles.json` file and cached locally with `AsyncStorage`. Pull down on the list to force a fresh load from the bundle.
+</Note>
+
+## What's covered
+
+The screen surfaces the following numbered articles from the RGEPA:
+
+| Article | Topic |
+|---------|-------|
+| 25 | Grading rules for the extraordinary exam period |
+| 27 | Requirements to be eligible for extraordinary evaluation |
+| 33 | Automatic dismissal after failing to pass all owed subjects |
+| 34 | Requesting a second chance after dismissal under Art. 33 |
+| 35 | Permanent dismissal — no re-entry to the same program |
+| 36 | Handling subjects removed by a curriculum change |
+| 49 | Requesting a grade review from the department head |
+| 90 | Causes of disciplinary responsibility and sanctions |
+
+## Screen layout
+
+The screen is built as a vertical `ScrollView` and is divided into three areas:
+
+<CardGroup cols={3}>
+  <Card title="Info banner" icon="circle-info">
+    A gradient card explains that the content covers relevant student regulations and links to the full RGEPA PDF on the UDG website.
+  </Card>
+  <Card title="Article cards" icon="list-ol">
+    Each regulation article is a white card with a blue gradient header showing the article number. Individual clauses (*incisos*) are listed below it with a quote icon.
+  </Card>
+  <Card title="Full document button" icon="book">
+    A prominent blue button at the bottom opens the official PDF: `secgral.udg.mx/.../rgepa-oct-2017.pdf`
+  </Card>
+</CardGroup>
+
+## Article structure
+
+Each article card follows this layout from the JSON data:
+
+```json
+"33": {
+  "incisos": [
+    "El alumno que por cualquier circunstancia no logre una calificación aprobatoria...",
+    "En caso de no presentarse al curso...",
+    "SI INCURRISTE EN ARTÍCULO 33 Y QUIERES SEGUIR ESTUDIANDO:",
+    "Consultar la fecha para el trámite en el cronograma de actividades..."
+  ]
+}
+```
+
+Each string in `incisos` is rendered as a separate bullet with a small quote icon.
+
+## Extraordinary exam grading (Article 25)
+
+This is one of the most-referenced articles. The key grading formula is:
+
+- **80%** of the final grade comes from the extraordinary exam score.
+- **40%** of the final grade comes from the ordinary period grade (note: this 40% weight applies *within* the extraordinary calculation, as described in the regulation).
+- The final grade is the sum of both weighted values.
+
+## Article 33 — Academic dismissal
+
+<Tip>
+  Article 33 is the most critical article for at-risk students. If you fail all owed subjects in an extraordinary period, dismissal is automatic. The app displays the full step-by-step instructions for requesting reinstatement via the SIIAU student portal (`escolar.cucei.udg.mx/cescolar`).
+</Tip>
+
+## Accessing the full regulation
+
+Two buttons link to the complete RGEPA document:
+
+1. **"Ver Reglamento Completo"** — in the top info banner.
+2. **"Consultar Documento Oficial"** — at the bottom of the screen.
+
+Both open the same URL using `Linking.openURL`:
+
+```
+https://secgral.udg.mx/sites/default/files/Normatividad_general/rgepa-oct-2017.pdf
+```
+
+## Pull-to-refresh
+
+Pulling down on the scroll view re-loads `articles.json` from the app bundle and updates the `AsyncStorage` cache. A loading spinner with a purple gradient overlay is shown on first load.

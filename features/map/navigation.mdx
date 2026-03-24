@@ -1,0 +1,95 @@
+---
+title: "Route navigation"
+description: "How to search for campus routes and navigate between buildings with video guides."
+---
+
+# Route navigation
+
+CUCEI Ubícate offers two complementary search tools for getting around campus: **route search** (point A to point B) and **specific search** (find a single location).
+
+## Route search
+
+Route search lets you pick a starting point and a destination, then activates a highlighted path on the map along with an optional video guide.
+
+<Steps>
+  <Step title="Open the route search">
+    Tap the **route icon** (faRoute) in the top-right area of the map screen. The `SearchRoute2` panel slides into view.
+  </Step>
+  <Step title="Enter start and destination">
+    Type a building name or alias in both the **From** and **To** fields. The search normalizes input — accented characters and case differences are handled automatically.
+
+    ```javascript SearchRoute2.js
+    const normalize = (s = "") =>
+      s
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+    ```
+
+    Recent searches are saved and shown as quick-pick history items.
+  </Step>
+  <Step title="Confirm the route">
+    Select your locations from the autocomplete suggestions. CUCEI Ubícate loads route data from `routes.json` and matches your input against available route pairs.
+  </Step>
+  <Step title="Follow the route">
+    The map highlights the path between your two points. If a video guide exists for that route, the **"Ver Video"** button appears in the bottom-right corner.
+  </Step>
+  <Step title="End navigation">
+    Tap **"Finalizar Ruta"** (the red button at the bottom of the screen) to clear the route and return to the default map view.
+  </Step>
+</Steps>
+
+### Route videos
+
+Each route with an available walkthrough video shows a **"Ver Video"** button (play icon) when the route is active. The `routeVideos` object in `Videos_data.js` maps route names to video URLs hosted on Google Drive.
+
+Examples of available routes with video guides:
+
+| Route | Video available |
+|---|---|
+| Módulo N → Módulo V | Yes |
+| Módulo V → Biblioteca | Yes |
+| Entrada Boulevard → Módulo A | Yes |
+| Módulo O → Módulo V2 | Yes |
+| Módulo X → Módulo V | Yes |
+| Módulo K → UCT1 | Yes |
+| Biblioteca → Entrada Boulevard | Yes |
+
+Over 100 route combinations have video guides. Routes without a video silently skip the video button.
+
+<Tip>
+  Route names follow the format `"[Origin] - [Destination]"`. The video lookup uses the exact route name string, so both directions (e.g., "Módulo V - Módulo N" and "Módulo N - Módulo V") may have separate videos.
+</Tip>
+
+## Specific search (find a location)
+
+The `SpecificSearch` bar is always visible on the map home screen (you don't need to tap a button to reveal it). Use it to highlight a single building or point on the map without activating a full route.
+
+<Steps>
+  <Step title="Type a location name">
+    Start typing any building name, alias, or common term (e.g., "biblioteca", "modulo e", "cajero", "comida"). The search uses the `aliases` array for each point — multiple names can resolve to the same location.
+  </Step>
+  <Step title="Select from results">
+    Tap a result from the autocomplete list. The map highlights the matching building by setting it as the `markedObject`.
+  </Step>
+  <Step title="View the highlighted location">
+    The selected building is visually distinguished on the SVG map layer. Tap it to open the bottom sheet with building details.
+  </Step>
+</Steps>
+
+### Location aliases
+
+Every point supports multiple aliases for flexible searching:
+
+| Search term | Resolves to |
+|---|---|
+| "biblioteca", "becas", "internacionalizacion" | Biblioteca |
+| "cajero", "banco santander" | Santander |
+| "comedor", "maestros" | Comedor de Maestros |
+| "laboratorio de ingenierias", "lab ing", "titanic" | Laboratorio de Ingenierías |
+| "cafebreria", "cafeteria", "libreria" | Cafebrería |
+| "entrada alumnos", "olimpica" | Entrada Olímpica |
+
+## Recent search history
+
+Both search components save your recent searches to AsyncStorage. History items appear as quick-pick suggestions below the search input, each with a history icon. You can clear individual history items using the trash icon that appears next to each saved entry.

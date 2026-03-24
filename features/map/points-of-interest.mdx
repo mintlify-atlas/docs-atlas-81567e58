@@ -1,0 +1,116 @@
+---
+title: "Points of interest"
+description: "All campus buildings, modules, and facilities available on the CUCEI map."
+---
+
+# Points of interest
+
+CUCEI Ubícate maps every major building, module, and facility on the CUCEI campus. Each point is a tappable area on the map that opens a bottom sheet with detailed information.
+
+## Point data structure
+
+Each point of interest is defined in `Src/Screens/Home/Components/MapComponent/data.js` with the following properties:
+
+```javascript data.js
+export const points = [
+  {
+    id: "Biblioteca",
+    name: "Biblioteca",
+    aliases: ["Biblioteca", "biblioteca", "becas", "internacionalizacion"],
+    left: 540,   // x-coordinate on the 1600×1400 map image
+    top: 1035,   // y-coordinate on the 1600×1400 map image
+    height: 73,  // tap target height in px
+    width: 80,   // tap target width in px
+    rotate: 5,   // rotation angle in degrees
+  },
+  // ...
+];
+```
+
+The `aliases` array enables flexible searching — any alias string will resolve to the correct point when you search in either the route or specific search bars.
+
+## Academic modules
+
+CUCEI campus is organized around lettered modules (A through Z2):
+
+| Point ID | Display name | Aliases |
+|---|---|---|
+| Modulo A | Módulo A | Modulo A, MA, edificio a |
+| Modulo B | Módulo B | Modulo B, MB, edificio b |
+| Modulo C | Módulo C | Modulo C, MC, edificio c |
+| Modulo D | Módulo D | Modulo D, MD, edificio d |
+| Modulo E | Módulo E | ME, Edificio E |
+| Modulo F | Módulo F | MF, Edificio F |
+| Modulo G | Módulo G | MG, Edificio G |
+| Modulo H | Módulo H | MH, Edificio H |
+| Modulo I | Módulo I | MI, Edificio I |
+| Modulo J | Módulo J | MJ, Edificio J |
+| Modulo K | Módulo K | MK, Edificio K |
+| Modulo L | Módulo L | ML, Edificio L |
+| Modulo L2 | Módulo L2 | ML2, Edificio L2 |
+| Modulo M | Módulo M | MM, Edificio M |
+| Modulo N | Módulo N | MN, Edificio N |
+| Modulo O | Módulo O | MO, Edificio O |
+| Modulo P | Módulo P | MP, Edificio P |
+| Modulo Q | Módulo Q | MQ, Edificio Q |
+| Modulo Q2 | Módulo Q2 | modulo q2, Edificio Q2 |
+| Modulo R | Módulo R | MR, Edificio R |
+| Modulo S | Módulo S | MS, Edificio S |
+| Modulo S2 | Módulo S2 | MS2, Edificio S2 |
+| Modulo T | Módulo T | MT, Edificio T |
+| Modulo U | Módulo U | MU, Edificio U |
+| Modulo V | Módulo V | MV, Edificio V |
+| Modulo V2 | Módulo V2 | MV2, Edificio V2 |
+| Modulo W | Módulo Doble V | MW, Edificio W |
+| Modulo X | Módulo X | modulo x, Edificio X |
+| Modulo Y | Módulo Y | MY, Edificio Y |
+| Modulo Z | Módulo Z | modulo z, Edificio Z |
+| Modulo Z1 | Módulo Z1 | modulo z1, Edificio Z1 |
+| Modulo Z2 | Módulo Z2 | MZ2, Edificio Z2 |
+
+## Technology centers
+
+| Point ID | Display name | Aliases |
+|---|---|---|
+| Alfa | UCT1 | UCT1, uct1, Alfa, alfa |
+| Beta | UCT2 | UCT2, uct2, Beta, beta |
+| CTA | CTA | Coordinacion de tecnologías, CTA |
+| Titanic | Laboratorio de Ingenierías | lab ingenierias, Lab ing |
+| JOBS | JOBS | salon jobs, ingles |
+| JOBS 2 | JOBS 2 | salon jobs, ingles |
+
+## Campus facilities
+
+| Point ID | Display name | Aliases |
+|---|---|---|
+| Biblioteca | Biblioteca | Biblioteca, becas, internacionalizacion |
+| Santander | Santander | Banco Santander, Cajero |
+| Cafebreria | Cafebrería | Cafeteria, Libreria, cafebreria |
+| Comedor de maestros | Comedor de Maestros | comedor, Maestros, Com |
+| Auditorio Matute Remus | Auditorio Matute Remus | Auditorio, Matute remus, Matute |
+| comida | Comida | comida T |
+| Comida15 | Comida15 | comida T |
+| La Flor de Córdoba | La Flor de Córdoba | Café |
+| Baños S2 | Baños S2 | baños S2, baños s2 |
+
+## Campus entrances
+
+| Point ID | Display name | Aliases |
+|---|---|---|
+| Entrada Boulevard | Entrada Boulevard | Entrada, Boulevard, Entrada maestros, Blvd |
+| Entrada Olimpica | Entrada Olímpica | Entrada alumnos, Olimpica |
+| Entrada Revolucion | Entrada Revolución | Revolucion, Entrada |
+
+## Tapping a point
+
+When you tap any marked area on the SVG map, the `handlePointPress` function is called with the point's `id`. This triggers the `BottomSheetComponent` to expand with information about that specific location.
+
+```javascript HomePage.js
+const handlePointPress = (pointId) => {
+  setSelectedPoint(pointId);
+  setIsBottomSheetVisible(true);
+  bottomSheetRef.current?.expand();
+};
+```
+
+The bottom sheet snaps to 50% height by default and can be expanded to 75% by swiping up.

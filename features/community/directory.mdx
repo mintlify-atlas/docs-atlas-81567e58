@@ -1,0 +1,87 @@
+---
+title: "Staff directory"
+description: "Finding CUCEI staff and department contacts"
+---
+
+The **Directory** screen is a searchable list of CUCEI academic and administrative contacts. Each entry is sourced from `contact_info.json` and rendered as a premium contact card with photo, position, department, address, phone extension, and a one-tap email/call action.
+
+## Directory structure
+
+The directory covers the full institutional hierarchy of CUCEI, from the Rector down to individual department coordinators. It includes:
+
+- **Rectoría and secretariats** — Rector, Technical Secretariat, Academic Secretariat, Administrative Secretariat
+- **Academic program coordinators** — undergraduate and graduate programs
+- **Academic divisions** — Division of Basic Sciences, Division of Engineering, Division of Technologies for Cyber-Human Integration
+- **Departments** — Farmacobiología, Química, Matemáticas, Física, Ingeniería Química, Ingeniería Civil y Topografía, Ciencias Computacionales, etc.
+- **Support units** — Scholarships and Exchange, Library Development, Social Service, Diffusion, Computing and Telecommunications for Learning
+- **Graduate programs** — multiple master's and doctoral coordinators
+- **Control and oversight** — School Control, Finance, Personnel, Internal Control
+
+## Sample directory entries
+
+| Name | Position | Department |
+|------|----------|------------|
+| Dr. Marco Antonio Pérez Cisneros | Rector | Rectoría |
+| Dra. Beatriz Adriana Rivera Aguilar | Secretario Técnico | Secretaría Técnica |
+| Mtro. Eduardo Mendez Palos | Secretario Académico | Secretaría Académica |
+| Mtra. Sara Esquivel Torres | Coordinador de Carrera | Coordinación de Ingeniería Informática |
+| Mtro. Pedro Misraim Gómez Rodríguez | Coordinador de Carrera | Coordinación de Ingeniería en Computación |
+| Dr. Erasmo Gabriel Martínez Soltero | Coordinador de Carrera | Coordinación de Ingeniería Robótica |
+| Dra. Alma Yolanda Alanís García | Directora de División | División de Tecnologías para la Integración Ciber-Humana |
+| Dr. José Roberto Galaviz González | Director de División | División de Ingenierías |
+| Dra. Gloria Arlette Méndez Maldonado | Directora de División | División de Ciencias Básicas |
+| Lic. Lucero Araceli Rios Espinoza | Jefa de Unidad | Unidad de Servicio Social |
+
+## Contact information shown
+
+Each card displays the following fields from the JSON:
+
+<CardGroup cols={2}>
+  <Card title="Name & position" icon="user">
+    Full name with academic title (Dr., Mtra., Ing., Lic., etc.) and their institutional role.
+  </Card>
+  <Card title="Department" icon="building">
+    The administrative or academic unit they belong to.
+  </Card>
+  <Card title="Address" icon="location-dot">
+    Most staff are at **Blvd. Marcelino García Barragán #1421, esq Calzada Olímpica**. A few units have distinct addresses (e.g., Instituto de Astronomía y Meteorología at Av. Vallarta 2602, Departamento de Madera Celulosa y Papel at Las Agujas, Zapopan).
+  </Card>
+  <Card title="Phone extension" icon="phone">
+    Main switchboard **33 1378 5900** with direct extensions. Displayed as a tappable button that dials the first listed extension.
+  </Card>
+  <Card title="Email" icon="envelope">
+    Institutional email address. Tapping opens the device mail client via `mailto:`.
+  </Card>
+  <Card title="Photo" icon="image">
+    A circular staff photo loaded from bundled assets. Contacts without a photo show a default placeholder image.
+  </Card>
+</CardGroup>
+
+## Searching the directory
+
+A pill-shaped search bar at the top of the screen filters results in real time. The search matches against three fields simultaneously:
+
+- **Name** (`nombre`)
+- **Position** (`puesto`)
+- **Department** (`departamento`)
+
+```
+Buscar por nombre, puesto o departamento...
+```
+
+Filtering is handled by a `useMemo` hook that recomputes the visible list whenever the search text or underlying data changes. The list renders with a `FlatList` for efficient virtualization.
+
+## Contact actions
+
+Each card has two action buttons stacked vertically:
+
+1. **Llamar extensión** (blue) — dials the first extension from `conmutador` using `Linking.openURL('tel:...')`. If there are multiple extensions separated by commas, only the first number is dialled.
+2. **Enviar Correo** (white/outlined) — opens the mail client via `Linking.openURL('mailto:...')`.
+
+## Loading behavior
+
+On first launch the directory shows three animated skeleton cards while data is read from `AsyncStorage`. Subsequent launches load immediately from the cache. Pull-to-refresh resets the cache from the static JSON bundle.
+
+<Info>
+  Contact data is bundled with the app and does not require an internet connection. Pull down to reload from the bundled source if you suspect stale data.
+</Info>

@@ -1,0 +1,210 @@
+---
+title: "Configuration"
+description: "Expo app configuration, EAS Build profiles, Babel setup, and TypeScript settings for CUCEI Ubícate."
+---
+
+## `app.json` — Expo configuration
+
+```json
+{
+  "expo": {
+    "name": "CUCEIUbicate",
+    "slug": "CUCEIUbicate",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/cucei.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "yairhdz24",
+      "infoPlist": {
+        "NSPhotoLibraryAddUsageDescription": "Esta aplicación necesita acceso a la biblioteca de fotos para guardar imágenes."
+      }
+    },
+    "android": {
+      "package": "com.cuceiubicate.cuceiubicate",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icono.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "permissions": [
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
+      "usesCleartextTraffic": true
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-video",
+      ["./plugins/withRemovePermissions", ["android.permission.RECORD_AUDIO"]],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "minSdkVersion": 24
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "08a561e4-8d60-47af-b4b6-f830296c28e8"
+      }
+    }
+  }
+}
+```
+
+### Key settings
+
+| Setting | Value | Notes |
+|---|---|---|
+| `orientation` | `portrait` | Locked to portrait on all platforms |
+| `userInterfaceStyle` | `light` | Light mode only — no dark mode support |
+| `ios.supportsTablet` | `true` | iPad is supported |
+| `android.usesCleartextTraffic` | `true` | Required for plain HTTP requests during development |
+| `android.minSdkVersion` | 24 | Android 7.0 Nougat and above |
+| `android.targetSdkVersion` | 35 | Android 15 |
+| `android.compileSdkVersion` | 35 | |
+
+## Expo plugins
+
+### `expo-secure-store`
+
+Built-in Expo plugin. Enables native keychain/keystore integration via `expo-secure-store` for storing secrets securely on device.
+
+### `expo-video`
+
+Built-in Expo plugin. Required for `expo-video` to configure platform-specific video playback entitlements.
+
+### `withRemovePermissions` (custom)
+
+Defined in `plugins/withRemovePermissions.js`. Uses `@expo/config-plugins` to add `tools:node="remove"` to specified Android permissions in the final `AndroidManifest.xml`. This prevents permissions from being merged in from transitive dependencies.
+
+```javascript
+// plugins/withRemovePermissions.js
+const { withAndroidManifest } = require('@expo/config-plugins');
+
+const withRemovePermissions = (config, permissions) => {
+  return withAndroidManifest(config, async (config) => {
+    // Adds xmlns:tools namespace if not present
+    // Marks each permission with tools:node="remove"
+    return config;
+  });
+};
+
+module.exports = withRemovePermissions;
+```
+
+Currently used to remove `android.permission.RECORD_AUDIO`, which is pulled in by a transitive dependency but not needed by the app.
+
+### `expo-build-properties`
+
+Sets Android SDK version overrides in `app.json` without requiring a custom native project.
+
+---
+
+## `eas.json` — EAS Build profiles
+
+```json
+{
+  "cli": {
+    "version": ">= 3.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": { "simulator": true },
+      "android": {
+        "image": "latest",
+        "env": { "EXPO_DEBUG": "true" }
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk",
+        "image": "latest",
+        "env": { "EXPO_DEBUG": "true" }
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "ios": { "simulator": false },
+      "android": {
+        "image": "latest",
+        "env": { "EXPO_DEBUG": "true" }
+      }
+    }
+  }
+}
+```
+
+### Build profiles
+
+<CardGroup cols={3}>
+  <Card title="development" icon="code">
+    Uses `expo-dev-client`. iOS builds target the simulator. Android builds include `EXPO_DEBUG=true`. Distribution is internal.
+  </Card>
+  <Card title="preview" icon="eye">
+    Internal distribution. Android produces an APK (not AAB) for direct device testing. No iOS build is defined.
+  </Card>
+  <Card title="production" icon="rocket">
+    `autoIncrement: true` — EAS increments the version code automatically. iOS targets a physical device. Android produces the default AAB.
+  </Card>
+</CardGroup>
+
+`appVersionSource: "remote"` means EAS controls the authoritative version number; the local `app.json` version is a fallback.
+
+---
+
+## `babel.config.js`
+
+```javascript
+module.exports = function (api) {
+  api.cache(true);
+  return {
+    presets: ['babel-preset-expo'],
+    plugins: ['react-native-reanimated/plugin'],
+  };
+};
+```
+
+- **`babel-preset-expo`** — the standard Expo Babel preset, which includes `@babel/preset-typescript`, JSX support, and module resolution for Expo packages.
+- **`react-native-reanimated/plugin`** — required by Reanimated 3; must be listed last in the plugins array. It transforms worklet functions at build time.
+
+<Note>
+  The Reanimated plugin must always be the last plugin in the Babel config. Moving it or adding plugins after it can cause runtime worklet errors.
+</Note>
+
+---
+
+## `tsconfig.json`
+
+```json
+{
+  "compilerOptions": {},
+  "extends": "expo/tsconfig.base"
+}
+```
+
+The project extends `expo/tsconfig.base`, which provides:
+
+- `"strict": true`
+- `"jsx": "react-native"`
+- `"moduleResolution": "bundler"`
+- Path aliases for Expo packages
+- ES2022 target
+
+No custom `compilerOptions` are set — the Expo defaults are used as-is. TypeScript files (`.ts`, `.tsx`) are supported in the project; the main entry (`App.js`) and most screens remain in JavaScript.

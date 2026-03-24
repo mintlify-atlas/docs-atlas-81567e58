@@ -1,0 +1,146 @@
+---
+title: "Environment and dependencies"
+description: "Runtime environment, SDK versions, and key package dependencies for CUCEI Ubícate."
+---
+
+## Runtime versions
+
+| Runtime | Version |
+|---|---|
+| React Native | 0.76.9 |
+| Expo SDK | 52 (`expo ^52.0.48`) |
+| React | 18.3.1 |
+| Node (dev) | LTS recommended |
+| TypeScript | 5.6.2 |
+| EAS CLI | 16.20.1 |
+
+## Navigation
+
+```json
+"@react-navigation/native":       "^6.1.9",
+"@react-navigation/native-stack": "^6.9.17",
+"@react-navigation/drawer":       "^6.6.6",
+"@react-navigation/bottom-tabs":  "^6.5.11"
+```
+
+- **native-stack** — used in `App.js` for the root auth/home stack
+- **drawer** — used in `MyDrawer.js` for the in-app navigation menu
+- **bottom-tabs** — included but not currently wired into the main navigation tree
+- **react-native-gesture-handler** (`~2.20.2`) and **react-native-screens** (`~4.4.0`) are required peer dependencies
+
+## UI and styling
+
+```json
+"react-native-paper":             "^5.12.3",
+"@fortawesome/react-native-fontawesome": "^0.3.0",
+"@fortawesome/free-solid-svg-icons":     "^6.5.1",
+"lottie-react-native":            "7.1.0",
+"expo-linear-gradient":           "~14.0.1",
+"react-native-reanimated":        "~3.16.1",
+"react-native-animatable":        "^1.4.0",
+"react-native-svg":               "15.8.0",
+"expo-blur":                      "~14.0.1"
+```
+
+- **react-native-paper** — Material Design 3 component library
+- **@fortawesome** — icon set used throughout the drawer and screens
+- **lottie-react-native** — JSON-based animations (splash screen, onboarding)
+- **expo-linear-gradient** — gradient backgrounds in the drawer header and cards
+- **react-native-reanimated 3** — gesture-driven animations; requires the Babel plugin
+
+## Storage
+
+```json
+"@react-native-async-storage/async-storage": "^1.19.0",
+"@supabase/supabase-js":                     "^2.39.8",
+"expo-secure-store":                         "~14.0.1"
+```
+
+- **AsyncStorage** — persists onboarding completion flag (`@onboarding_completed`) and the user session object
+- **@supabase/supabase-js** — Supabase client for supplementary database and realtime operations
+- **expo-secure-store** — hardware-backed key/value store for sensitive values on iOS and Android
+
+## Media
+
+```json
+"expo-av":    "~15.0.1",
+"expo-video": "~2.0.1",
+"expo-image": "~2.0.7"
+```
+
+- **expo-av** — audio/video playback (legacy API; used in Radio CUCEI)
+- **expo-video** — modern video component (Expo SDK 52+)
+- **expo-image** — performant image component with caching and transitions
+
+## Security
+
+```json
+"bcryptjs":           "^2.4.3",
+"expo-secure-store":  "~14.0.1",
+"expo-crypto":        "~14.0.2"
+```
+
+- **bcryptjs** — imported as a dependency but the app uses a custom `secureHash()` function for password hashing (see [Architecture](/development/architecture))
+- **expo-crypto** — cryptographic utilities from Expo (hashing, UUID)
+- **expo-secure-store** — listed under Storage above; relevant here as a security primitive
+
+<Note>
+  `bcryptjs` is present in `package.json` but the active password hashing implementation uses the custom `secureHash()` function defined in `Src/Api/lib/api.ts`, `altaUsuario.ts`, `login.ts`, and `register.ts`. The `secureHash` format (`$secure$...`) is not bcrypt-compatible.
+</Note>
+
+## AI and chat
+
+```json
+"@google/generative-ai":   "^0.21.0",
+"react-native-gifted-chat": "^2.6.4"
+```
+
+- **@google/generative-ai** — Google Gemini SDK included as a dependency; the active chatbot in `Chatbot.js` calls Stack AI via a direct `fetch()` to a Stack AI endpoint rather than this SDK
+- **react-native-gifted-chat** — chat UI library included as a dependency; `Chatbot.js` uses a custom `FlatList`-based message renderer rather than GiftedChat's `GiftedChat` component directly
+
+## File system and sharing
+
+```json
+"expo-file-system":   "~18.0.10",
+"expo-media-library": "~17.0.6",
+"expo-sharing":       "~13.0.1",
+"expo-clipboard":     "~7.0.1"
+```
+
+Used in Profile and map screens to save, share, and copy content.
+
+## Other notable dependencies
+
+```json
+"@gorhom/bottom-sheet":          "^4.6.1",
+"react-native-onboarding-swiper": "^1.3.0",
+"react-native-confetti-cannon":  "^1.5.2",
+"expo-keep-awake":               "~14.0.2",
+"expo-network":                  "~7.0.0",
+"expo-updates":                  "~0.27.4",
+"react-native-responsive-screen": "^1.4.2"
+```
+
+- **@gorhom/bottom-sheet** — the sliding bottom panel on the map screen that shows building/module details
+- **react-native-onboarding-swiper** — swipeable onboarding carousel shown on first launch
+- **expo-updates** — OTA update support for production builds
+- **expo-keep-awake** — prevents the screen from sleeping during active map navigation
+- **react-native-responsive-screen** — percentage-based dimension helpers for layout
+
+## Dev dependencies
+
+```json
+"@babel/core":                            "^7.24.0",
+"@types/bcryptjs":                        "^2.4.2",
+"@types/react":                           "~18.3.12",
+"@types/react-native-get-random-values":  "^1.8.2",
+"typescript":                             "^5.6.2"
+```
+
+## `overrides`
+
+The `overrides` field in `package.json` is present but empty (`{}`). No dependency version overrides are currently active.
+
+<Info>
+  The `eas-cli` package is listed under `dependencies` (not `devDependencies`) at version `^16.20.1`. For most workflows it is more conventional to install the EAS CLI globally. Having it in `dependencies` ensures CI environments use a pinned version without a global install.
+</Info>

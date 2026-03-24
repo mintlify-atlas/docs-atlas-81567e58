@@ -1,0 +1,115 @@
+---
+title: "Session management"
+description: "How CUCEI Ubícate persists, reads, and clears user sessions across app restarts."
+---
+
+Session management is handled by three functions exported from `Src/auth/SessionManager.js`. All data is persisted to `AsyncStorage` using the key `userSession`.
+
+## API reference
+
+### `setSession(userData)`
+
+Serializes a user object to JSON and stores it under the `userSession` key. Immediately reads the key back to verify the write succeeded.
+
+```js
+import { setSession } from "./Src/auth/SessionManager";
+
+// Called after a successful login
+await setSession(result.userData);
+```
+
+**Validation:** Throws an error if `userData` is falsy, or if either `userData.email` or `userData.username` is missing. These are the minimum fields required to consider a session valid.
+
+**Returns:** `true` if the data was written and verified, otherwise throws.
+
+---
+
+### `getSession()`
+
+Reads and parses the `userSession` key from `AsyncStorage`.
+
+```js
+import { getSession } from "./Src/auth/SessionManager";
+
+const user = await getSession();
+if (user) {
+  console.log(user.username); // e.g. "jdoe"
+  console.log(user.email);    // e.g. "jdoe@alumnos.udg.mx"
+  console.log(user.code);     // student code
+}
+```
+
+**Returns:** The parsed user object if a session exists, or `null` if none is found or an error occurs. Errors are caught internally and logged — `getSession` never throws.
+
+The returned object includes: `id`, `email`, `username`, `name`, `lastnames`, `degree_code`, `code`, `user_code`, `student_code`, and `codigo`.
+
+---
+
+### `clearSession()`
+
+Removes the `userSession` key from `AsyncStorage`, effectively logging the user out.
+
+```js
+import { clearSession } from "./Src/auth/SessionManager";
+
+// Called on logout
+await clearSession();
+```
+
+**Returns:** `void`. Errors are caught internally and logged.
+
+---
+
+## AsyncStorage keys
+
+| Key | Type | Set by | Read by | Purpose |
+|---|---|---|---|---|
+| `userSession` | JSON string | `setSession()` | `getSession()`, `clearSession()` | Persists the logged-in user object |
+| `@onboarding_completed` | `"true"` | `OnboardingScreen.js` | `App.js` | Tracks whether onboarding has been seen |
+| `@saved_email` | string | `CompleteProfile.js` | `LoginScreen.js` | Pre-fills the email field after registration |
+
+## App startup flow
+
+Every time the app launches, `App.js` calls `checkAppState()` inside a `useEffect`. The function follows this decision tree:
+
+```
+1. Read @onboarding_completed from AsyncStorage
+   ├── null  →  First launch: show Onboarding (stop here)
+   └── "true" →  Continue to session check
+
+2. Call getSession()
+   ├── session found  →  setIsLoggedIn(true), go to Principal Home
+   └── session null   →  setIsLoggedIn(false), go to Login
+```
+
+In code:
+
+```js
+const checkAppState = async () => {
+  const onboardingCompleted = await AsyncStorage.getItem("@onboarding_completed");
+
+  if (onboardingCompleted === null) {
+    setIsFirstLaunch(true);
+    setIsLoggedIn(false);
+    return; // show onboarding; do not check session
+  }
+
+  const session = await getSession();
+  if (session) {
+    setUserSession(session);
+    setIsLoggedIn(true);
+  } else {
+    setIsLoggedIn(false); // redirect to Login
+  }
+};
+```
+
+If an unhandled error occurs in `checkAppState`, the app falls back to `isFirstLaunch = true` so the onboarding screen is displayed rather than leaving the user stuck on a loading state.
+
+## Automatic redirect to Login
+
+When `getSession()` returns `null` (and onboarding has already been completed), the navigation stack renders only the `Login`, `Registro`, `Completar Perfil`, and `Principal Home` screens — with `Login` as the initial route. The user cannot reach `Principal Home` without first completing `handleLogin` successfully and having a session persisted by `setSession`.
+
+<Tip>
+  To manually clear a session during development, use the Expo Dev Client's AsyncStorage inspector, or call `clearSession()` directly from any screen that has access to the module.
+</Tip>

@@ -1,0 +1,293 @@
+---
+title: "Users API"
+description: "API functions for managing student user accounts in CUCEI Ubícate."
+---
+
+All user functions are exported from `Src/Api/lib/api.ts` and communicate with the `/CUB_users` endpoint.
+
+## `UserRow` type
+
+```typescript
+export type UserRow = {
+  id: number;             // Auto-increment primary key (managed by PHP backend)
+  int_user_code: number;  // 9-digit student code (e.g. 555555555)
+  var_email: string;
+  var_password: string;   // Stored as $secure$ hash
+  var_degree_code: string; // e.g. "INCO", "INFO"
+  var_name: string;
+  var_lastnames: string;
+  var_username: string;
+};
+```
+
+## Query functions
+
+### `findUserByEmail`
+
+Looks up users by email address. The email is lowercased, normalized with `cleanString()`, and URL-encoded before the query is sent.
+
+```typescript
+export const findUserByEmail = async (email: string): Promise<UserRow[]>
+```
+
+<ParamField path="email" type="string" required>
+  The email address to search for. Accented characters are normalized before the query.
+</ParamField>
+
+**Returns** — `Promise<UserRow[]>`. Returns an empty array if no user is found or if a network error occurs.
+
+**Endpoint:** `GET /CUB_users?var_email=<encoded_email>`
+
+---
+
+### `findUserByUsername`
+
+Looks up users by username. Applies the same normalization as `findUserByEmail`.
+
+```typescript
+export const findUserByUsername = async (username: string): Promise<UserRow[]>
+```
+
+<ParamField path="username" type="string" required>
+  The username to search for. Lowercased and normalized before the query.
+</ParamField>
+
+**Returns** — `Promise<UserRow[]>`. Returns an empty array if not found.
+
+**Endpoint:** `GET /CUB_users?var_username=<encoded_username>`
+
+---
+
+### `findUserByCode`
+
+Looks up users by their 9-digit student code. Non-digit characters are stripped before the query.
+
+```typescript
+export const findUserByCode = async (code: string | number): Promise<UserRow[]>
+```
+
+<ParamField path="code" type="string | number" required>
+  The student code. Only digit characters are kept; all others are stripped.
+</ParamField>
+
+**Returns** — `Promise<UserRow[]>`. Returns an empty array if not found.
+
+**Endpoint:** `GET /CUB_users?int_user_code=<code>`
+
+---
+
+### `findUserById`
+
+Fetches a single user by their auto-increment primary key.
+
+```typescript
+export const findUserById = async (userId: number): Promise<UserRow | null>
+```
+
+<ParamField path="userId" type="number" required>
+  The auto-increment `id` of the user.
+</ParamField>
+
+**Returns** — `Promise<UserRow | null>`. Returns `null` if not found or on error.
+
+**Endpoint:** `GET /CUB_users/<userId>`
+
+---
+
+## Mutation functions
+
+### `insertUser`
+
+Creates a new user via `register.ts` flow. Hashes the password with `secureHash()` before sending. Returns the new user's `id`.
+
+```typescript
+export const insertUser = async (userData: {
+  email: string;
+  username: string;
+  password: string;    // Plain text — hashed internally before POST
+  name: string;
+  lastnames: string;
+  degree_code: string;
+}): Promise<number>
+```
+
+<ParamField path="userData.email" type="string" required>
+  Student email address.
+</ParamField>
+<ParamField path="userData.username" type="string" required>
+  Unique username (3–30 chars, alphanumeric + `_ . -`).
+</ParamField>
+<ParamField path="userData.password" type="string" required>
+  Plain text password. It is hashed with `secureHash()` before the request is made.
+</ParamField>
+<ParamField path="userData.name" type="string" required>
+  Student first name.
+</ParamField>
+<ParamField path="userData.lastnames" type="string" required>
+  Student last name(s).
+</ParamField>
+<ParamField path="userData.degree_code" type="string" required>
+  Degree program code (e.g. `INCO`). Uppercased before insertion.
+</ParamField>
+
+**Returns** — `Promise<number>` — the new user's `id`. Throws if the ID cannot be determined from the server response.
+
+**Endpoint:** `POST /CUB_users`
+
+---
+
+### `createUser`
+
+Lower-level user creation used by `alta_usuario.ts`. Accepts a pre-formed payload that mirrors the `UserRow` column names, including `int_user_code` (the student code). The password must already be hashed.
+
+```typescript
+export const createUser = async (userData: {
+  int_user_code: number;
+  var_email: string;
+  var_password: string;  // Must be pre-hashed
+  var_degree_code: string;
+  var_name: string;
+  var_lastnames: string;
+  var_username: string;
+}): Promise<any>
+```
+
+**Returns** — `Promise<any>` — the raw server response.
+
+**Endpoint:** `POST /CUB_users`
+
+---
+
+### `updateUser`
+
+Updates one or more fields of an existing user. Uses the auto-increment `id` as the path parameter.
+
+```typescript
+export const updateUser = async (
+  userId: number,
+  userData: Partial<UserRow>
+): Promise<boolean>
+```
+
+<ParamField path="userId" type="number" required>
+  The `id` of the user to update.
+</ParamField>
+<ParamField path="userData" type="Partial<UserRow>" required>
+  An object containing only the fields to update. Any subset of `UserRow` fields is accepted.
+</ParamField>
+
+**Returns** — `Promise<boolean>` — `true` if the server returns a successful object response, `false` otherwise.
+
+**Endpoint:** `PUT /CUB_users/<userId>`
+
+---
+
+### `updateUserPassword`
+
+Convenience wrapper around `updateUser` that updates only the `var_password` field.
+
+```typescript
+export const updateUserPassword = async (
+  userId: number,
+  newPasswordHash: string
+): Promise<boolean>
+```
+
+<ParamField path="userId" type="number" required>
+  The `id` of the user.
+</ParamField>
+<ParamField path="newPasswordHash" type="string" required>
+  The new password value, already hashed with `secureHash()`.
+</ParamField>
+
+**Returns** — `Promise<boolean>`
+
+---
+
+### `deleteUser`
+
+Deletes a user by their auto-increment `id`.
+
+```typescript
+export const deleteUser = async (userId: number): Promise<boolean>
+```
+
+<ParamField path="userId" type="number" required>
+  The `id` of the user to delete.
+</ParamField>
+
+**Returns** — `Promise<boolean>` — `true` if `result.ok === true` in the server response.
+
+**Endpoint:** `DELETE /CUB_users/<userId>`
+
+---
+
+## Admin functions
+
+### `getAllUsers`
+
+Fetches all users sorted by name. Intended for administrative use.
+
+```typescript
+export const getAllUsers = async (): Promise<UserRow[]>
+```
+
+**Returns** — `Promise<UserRow[]>`. Returns an empty array on error.
+
+**Endpoint:** `GET /CUB_users?order=var_name&dir=ASC`
+
+---
+
+## Registration flow
+
+### `registerUser`
+
+High-level registration function that validates all fields, checks for duplicate email and username, then calls `insertUser`. Defined in both `Src/Api/api.ts` and `Src/Api/lib/api.ts`.
+
+```typescript
+export const registerUser = async (userData: {
+  email: string;
+  username: string;
+  password: string;
+  name: string;
+  lastnames: string;
+  degree_code: string;
+}): Promise<{ success: boolean; message: string; userId?: number }>
+```
+
+<ParamField path="userData.email" type="string" required>
+  Must pass `validateEmail()` format check.
+</ParamField>
+<ParamField path="userData.username" type="string" required>
+  Must pass `validateUsername()` — 3–30 chars, `[a-zA-Z0-9_.-]` only.
+</ParamField>
+<ParamField path="userData.password" type="string" required>
+  Must pass `validatePassword()` — 6–50 chars.
+</ParamField>
+<ParamField path="userData.name" type="string" required>
+  Student first name.
+</ParamField>
+<ParamField path="userData.lastnames" type="string" required>
+  Student last name(s).
+</ParamField>
+<ParamField path="userData.degree_code" type="string" required>
+  Degree program code.
+</ParamField>
+
+<ResponseField name="success" type="boolean">
+  `true` if registration completed without errors.
+</ResponseField>
+<ResponseField name="message" type="string">
+  Human-readable result or error description.
+</ResponseField>
+<ResponseField name="userId" type="number">
+  The new user's `id`. Only present when `success` is `true`.
+</ResponseField>
+
+**Validation order:**
+1. `validateEmail()`
+2. `validateUsername()`
+3. `validatePassword()`
+4. `findUserByEmail()` — duplicate check
+5. `findUserByUsername()` — duplicate check
+6. `insertUser()` — creates the record

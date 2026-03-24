@@ -1,0 +1,127 @@
+---
+title: "Project structure"
+description: "Directory layout and code organization of the CUCEI Ubícate source tree."
+---
+
+## Directory tree
+
+```
+cuceiubicate/
+├── App.js                        # Application entry point — navigation + auth state machine
+├── app.json                      # Expo configuration (name, slug, icons, plugins)
+├── eas.json                      # EAS Build profiles (development, preview, production)
+├── babel.config.js               # Babel preset: babel-preset-expo + reanimated plugin
+├── tsconfig.json                 # TypeScript config (extends expo/tsconfig.base)
+├── package.json                  # Dependencies and scripts
+│
+├── Src/
+│   ├── Api/                      # Data access layer
+│   │   ├── lib/
+│   │   │   └── api.ts            # Canonical HTTP client + all exported API functions
+│   │   ├── api.ts                # Mirror of lib/api.ts (with extended debug logging)
+│   │   ├── altaUsuario.ts        # alta_usuario() — registration with secureHash
+│   │   ├── consultas.ts          # get_degrees() — degree list UI adapter
+│   │   ├── fetchJsons.ts         # getJsons() — generic JSON fetch utility
+│   │   ├── login.ts              # login() — credential verification with secureCompare
+│   │   ├── register.ts           # register() — full validation + insertUser flow
+│   │   └── validaciones.ts       # validar_correo / validar_usuario / validar_codigo
+│   │
+│   ├── auth/                     # Authentication screens
+│   │   ├── LoginScreen.js
+│   │   ├── RegisterScreen.js
+│   │   ├── CompleteProfile.js
+│   │   ├── OnboardingScreen.js
+│   │   └── SessionManager.js     # getSession / clearSession via AsyncStorage
+│   │
+│   ├── components/               # Shared UI components
+│   │   └── SplashScreen.js       # Animated splash with login-success state
+│   │
+│   ├── Screens/
+│   │   ├── Home/
+│   │   │   ├── Components/
+│   │   │   │   ├── SearchBarsComponent/
+│   │   │   │   │   ├── MyDrawer.js      # Drawer navigator + custom drawer content
+│   │   │   │   │   ├── SearchRoute.js
+│   │   │   │   │   ├── SearchRoute2.js
+│   │   │   │   │   └── SearchSpecific.js
+│   │   │   │   ├── BottonSheetComponent/
+│   │   │   │   │   └── Modulos/         # A–Z building modules + special locations
+│   │   │   │   ├── MapComponent/
+│   │   │   │   │   └── data/
+│   │   │   │   └── VideoComponent/
+│   │   │   └── assets/images/
+│   │   │
+│   │   ├── Profile/
+│   │   │   ├── ProfileScreen.js
+│   │   │   ├── Iconos_animales/
+│   │   │   ├── Iconos_perzonalizados/
+│   │   │   └── Mallas_Curriculares/     # Degree curriculum sheets
+│   │   │
+│   │   ├── Education/
+│   │   │   ├── CUCEI_radio.js
+│   │   │   └── Scholarships.js
+│   │   │
+│   │   ├── ScolarServices/
+│   │   │   ├── Facial_recognition.js
+│   │   │   ├── Medical_services.js
+│   │   │   ├── School_services.js
+│   │   │   ├── Social_service.js
+│   │   │   └── CID.js
+│   │   │
+│   │   ├── ChatBot/
+│   │   │   ├── Chatbot.js
+│   │   │   └── images/
+│   │   │
+│   │   └── community/
+│   │       ├── Directory.js
+│   │       └── Articles.js
+│   │
+│   └── assets/
+│       ├── animations/           # Lottie JSON animation files
+│       └── images/
+│
+├── assets/
+│   └── images/
+│       ├── cucei.png             # App icon
+│       ├── icono.png             # Android adaptive icon foreground
+│       └── splash.png            # Splash screen image
+│
+├── json/                         # Static JSON data files
+├── plugins/
+│   └── withRemovePermissions.js  # Custom Expo config plugin
+└── scripts/
+    ├── createTestUser.ts         # Creates a random test user via alta_usuario()
+    └── listDegrees.ts            # Prints all degree programs from the API
+```
+
+## Key files explained
+
+### `App.js` — Entry point
+
+The root component. Manages three pieces of state (`isFirstLaunch`, `isLoggedIn`, `userSession`) and renders the appropriate Stack screen group based on the result of `checkAppState()`. All navigation in the app starts here.
+
+### `Src/Api/lib/api.ts` — Canonical API client
+
+The single source of truth for all backend communication. Exports `http()`, all CRUD functions, both type definitions (`UserRow`, `DegreeRow`), and all validation helpers. Other files in `Src/Api/` import from this module.
+
+### `Src/Api/api.ts` — Extended debug client
+
+A parallel implementation of `lib/api.ts` with additional `console.log` statements for development debugging. Used directly in some feature screens. Contains the same exported interface.
+
+### `Src/Screens/Home/Components/SearchBarsComponent/MyDrawer.js`
+
+Defines the Drawer Navigator with its custom content component. The drawer items are organized into four sections and each item maps a screen name to an imported screen component.
+
+### `Src/Screens/Home/Components/BottonSheetComponent/Modulos/`
+
+Contains one directory per campus building or location (Modulo_A through Modulo_Z2, plus Biblioteca, Cafebreria, Comida, Entradas, Jobs, Matute, Titanic, globo). Each module directory holds the content shown in the bottom sheet when that location is selected on the map.
+
+## Naming conventions
+
+| Pattern | Usage |
+|---|---|
+| `PascalCase` | Screen components (`LoginScreen`, `ProfileScreen`, `MyDrawer`) |
+| `camelCase` | Utility functions (`findUserByEmail`, `cleanString`, `secureHash`) |
+| `snake_case` | Legacy API wrappers (`alta_usuario`, `get_degrees`, `validar_correo`) |
+| `UPPER_SNAKE_CASE` | Constants (`BASE`, `USE_INDEX_PHP`) |
+| `Modulo_X` | Campus building directories, where X is a letter or code |

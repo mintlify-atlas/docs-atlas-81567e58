@@ -1,0 +1,95 @@
+---
+title: "Using the chatbot"
+description: "How to open, send messages, and manage your conversation with the CUCEI AI Assistant."
+---
+
+# Using the chatbot
+
+## Opening the chatbot
+
+The chatbot is accessible from the home map screen via the floating **ChatbotButton**. It appears in the bottom-right corner of the screen when you're not in an active navigation route.
+
+The button shows a tooltip on first load: **"¡Hola! ¿Necesitas ayuda?"** — tap the message text to go directly to the chatbot, or tap the **×** to dismiss just the tooltip.
+
+<Steps>
+  <Step title="Locate the chatbot button">
+    Look for the bot icon in the bottom-right corner of the map screen. It appears as a circular blue button with the CUCEI bot mascot image.
+
+    <Note>
+      The chatbot button is automatically hidden when a campus route is active, so it does not overlap with navigation controls.
+    </Note>
+  </Step>
+  <Step title="Tap to open">
+    Tap the bot icon to navigate to the **ChatbotScreen**. You'll see your conversation history (or the welcome message if it's your first visit).
+  </Step>
+  <Step title="Type your question">
+    Use the text input at the bottom of the screen. The input supports multi-line messages up to 1000 characters.
+  </Step>
+  <Step title="Send the message">
+    Tap the **send button** (paper-plane icon) or press **Enter** on your keyboard. The send button is disabled and greyed out when the input is empty.
+  </Step>
+  <Step title="Wait for the response">
+    A typing animation (three bouncing dots with the bot avatar) appears while the AI generates a response. Once complete, the bot's reply appears in the conversation list.
+  </Step>
+</Steps>
+
+## Button auto-hide behavior
+
+The chatbot button persists across app sessions. If you tap the **×** (close) button on the floating bot:
+
+- The button hides immediately
+- It reappears automatically after **5 minutes** (`REAPPEAR_DELAY = 5 * 60 * 1000`)
+- It also reappears when the app returns to the foreground from the background
+
+## Clickable links in responses
+
+The chatbot renders URLs in bot responses as tappable links:
+
+```javascript Chatbot.js
+const renderTextWithLinks = (text) => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  return parts.map((part, index) => {
+    if (part.match(urlRegex)) {
+      return (
+        <Text key={index} style={styles.link}
+          onPress={() => Linking.openURL(part)}>
+          {part}
+        </Text>
+      );
+    }
+    return <Text key={index}>{part}</Text>;
+  });
+};
+```
+
+Tapping a link opens it in the device's default browser.
+
+## Copying messages
+
+Every bot response has a **copy icon** (clipboard) in the top-right corner of the message bubble. Tap it to copy the full message text to your clipboard. An alert confirms: **"El mensaje ha sido copiado al portapapeles"**.
+
+## Inactivity flow
+
+If you leave the chatbot screen open without sending a message for 2 minutes:
+
+<Steps>
+  <Step title="Inactivity modal appears">
+    A modal slides in: **"¿Aún estás ahí?"** with the message *"No he recibido mensajes en un tiempo. ¿Quieres mantener nuestra conversación?"*
+  </Step>
+  <Step title="Choose an action">
+    - **Continuar** (green) — dismisses the modal and resets the 2-minute timer
+    - **Limpiar chat** (red) — deletes all messages and resets to the welcome message
+  </Step>
+  <Step title="Auto-delete (3 minutes)">
+    If you don't interact with the modal, the conversation is automatically cleared at the 3-minute mark, keeping only the original welcome message.
+  </Step>
+</Steps>
+
+<Tip>
+  The chatbot works best for campus-specific questions: building locations, department contacts, university regulations, scholarship info, and academic schedules. For general knowledge questions, responses may be less accurate.
+</Tip>
+
+## Clearing the conversation
+
+You can trigger the `deleteConversation` function from the inactivity modal. This resets the conversation to just the initial welcome message and clears the `"chatMessages"` AsyncStorage key.

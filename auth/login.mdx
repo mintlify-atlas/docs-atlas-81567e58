@@ -1,0 +1,66 @@
+---
+title: "Login"
+description: "Sign in to your CUCEI Ubícate account using your institutional email and password."
+---
+
+The login screen (`Src/auth/LoginScreen.js`) accepts an email address and password, verifies credentials against the database, saves the session, and navigates to the main app.
+
+## Login flow
+
+<Steps>
+  <Step title="Enter credentials">
+    The user enters their **email address** in the first field and their **password** in the second. The password field has a show/hide toggle.
+
+    If the user just completed registration, their email is automatically pre-populated from `AsyncStorage` (key `@saved_email`). The field is displayed with a green border and a checkmark icon as a visual indicator. The saved email is removed from storage immediately after being read.
+
+    **Client-side validation before submission:**
+    - Both fields must be non-empty. If either is empty, "Por favor, completa todos los campos." is shown.
+    - The email must match `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`. If it does not, "Ingresa un correo electrónico válido." is shown.
+  </Step>
+
+  <Step title="Credential verification">
+    The `login(email, password)` function in `Src/Api/login.ts` handles authentication:
+
+    1. The email is normalized (NFD decomposition, lowercase, trimmed) before the database lookup.
+    2. The database is queried first by email via `findUserByEmail`. If no record is found, it falls back to `findUserByUsername`.
+    3. If still no record is found, `{ isMatch: false, userData: null }` is returned.
+    4. The stored hash is verified by `secureCompare(password, storedHash)`, which recreates the three-pass hash using the timestamp embedded in the stored value and compares all three hash components.
+    5. As a fallback, a plain string comparison is also attempted.
+
+    ```ts
+    export const login = async (
+      user: string,
+      contraseña: string
+    ): Promise<{ isMatch: boolean; userData: any } | false>
+    ```
+
+    On success, `login` returns `{ isMatch: true, userData }` where `userData` contains the following fields: `id`, `email`, `username`, `name`, `lastnames`, `degree_code`, and `code` (student code).
+  </Step>
+
+  <Step title="Session saved and navigation">
+    If `result.isMatch === true` and `result.userData` is present:
+
+    1. `setSession(result.userData)` is called to persist the user object to `AsyncStorage` under the key `userSession`.
+    2. A success modal appears showing the CUCEI logo and a map-loading Lottie animation with the message "¡Bienvenido! Preparando tu experiencia...".
+    3. After **3 seconds**, `navigation.reset` replaces the navigation stack with a single `Principal Home` route, passing `{ user: result.userData }` as params. Using `reset` ensures the user cannot navigate back to the login screen.
+  </Step>
+</Steps>
+
+## Error states
+
+| Condition | Error message |
+|---|---|
+| Empty email or password | "Por favor, completa todos los campos." |
+| Invalid email format | "Ingresa un correo electrónico válido." |
+| Wrong credentials (no match or incorrect password) | "Correo o contraseña incorrectos." |
+| Network or unexpected error in `login()` | "Error al iniciar sesión. Intenta de nuevo." |
+
+When an error occurs, the login form shakes using a `Animated.sequence` shake animation and the error message is displayed below the password field.
+
+## Registering a new account
+
+A "¿No tienes cuenta? ¡Regístrate!" link at the bottom of the form navigates to the `Registro` screen. See the [Registration](/auth/registration) page for details.
+
+<Warning>
+  There is currently no "forgot password" or account recovery flow in the app. Users who lose access to their password must contact an administrator.
+</Warning>
